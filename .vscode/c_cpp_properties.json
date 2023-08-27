@@ -1,0 +1,18 @@
+{
+  "configurations": [
+    {
+      "name": "master",
+      "includePath": [
+        "${workspaceRoot}",
+        "${workspaceRoot}/enki",
+        "${workspaceRoot}/enki/impl",
+        "${workspaceRoot}/tests/include"
+      ],
+      // "compileCommands": "${workspaceRoot}/build/compile_commands.json",
+      "intelliSenseMode": "gcc-x64",
+      "cppStandard": "c++20",
+      "cStandard": "c11"
+    }
+  ],
+  "version": 4
+}
