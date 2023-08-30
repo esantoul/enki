@@ -11,9 +11,13 @@
 #include <initializer_list>
 #include <cstdint>
 
-struct S
+struct SBase
 {
-  int32_t a = 0;
+  int32_t a : 16 = 0;
+};
+
+struct S : SBase
+{
   float b = 0.f;
 };
 
@@ -22,14 +26,14 @@ using MyArrayMap = ArrayMap<K, T, 10>;
 
 static constexpr auto mgr = []() {
   enki::Manager<MyArrayMap> ret;
-  ret.Register<S, &S::b, &S::a>();
+  ret.Register<S, &S::b, ENKIREG(SBase, a)>();
   return ret;
 }();
 
 static const auto kResult = []() {
   std::array<std::byte, 128> workbuf{};
 
-  S in{20, 30.f};
+  S in{{20}, 30.f};
   mgr.Serialize(in, workbuf.begin()).first.or_throw();
 
   S ret;

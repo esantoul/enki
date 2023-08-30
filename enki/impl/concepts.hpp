@@ -119,4 +119,37 @@ namespace enki::concepts
     requires (It it, It it2) { it2 = it; };
 }
 
+namespace enki
+{
+  struct WrapperBase;
+}
+
+namespace enki::concepts
+{
+  template <typename T, typename MW>
+  concept proper_member_wrapper =
+    std::derived_from<MW, ::enki::WrapperBase> &&
+    std::derived_from<T, typename MW::class_type> &&
+    requires { typename MW::value_type; MW::getter; MW::setter; };
+
+  namespace details
+  {
+    template <auto p>
+    struct member_pointer : std::false_type {};
+
+    template <typename T, typename M, M T:: *p>
+    struct member_pointer<p> : std::true_type
+    {
+      using class_type = T;
+      using value_type = M;
+    };
+  }
+
+  template <typename T, auto p>
+  concept class_member =
+    proper_member_wrapper<T, decltype(p)> ||
+    (details::member_pointer<p>::value &&
+      std::same_as<typename details::member_pointer<p>::class_type, T>);
+}
+
 #endif // ENKI_CONCEPTS_HPP
