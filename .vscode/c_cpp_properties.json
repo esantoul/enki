@@ -6,9 +6,10 @@
         "${workspaceRoot}",
         "${workspaceRoot}/enki",
         "${workspaceRoot}/enki/impl",
-        "${workspaceRoot}/tests/include"
+        "${workspaceRoot}/tests/include",
+        "${workspaceRoot}/build/_deps/catch2-src/src/catch2"
       ],
-      // "compileCommands": "${workspaceRoot}/build/compile_commands.json",
+      "compileCommands": "${workspaceRoot}/build/compile_commands.json",
       "intelliSenseMode": "gcc-x64",
       "cppStandard": "c++20",
       "cStandard": "c11"
