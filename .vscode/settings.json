@@ -87,5 +87,6 @@
   "editor.defaultFormatter": "ms-vscode.cpptools",
   "C_Cpp.vcFormat.indent.braces": false,
   "C_Cpp.vcFormat.indent.lambdaBracesWhenParameter": false,
-  "C_Cpp.vcFormat.indent.preserveComments": true
+  "C_Cpp.vcFormat.indent.preserveComments": true,
+  "cmake.configureOnEdit": false
 }

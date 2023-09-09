@@ -26,7 +26,7 @@ using MyArrayMap = ArrayMap<K, T, 10>;
 
 static constexpr auto mgr = []() {
   enki::Manager<MyArrayMap> ret;
-  ret.Register<S, &S::b, ENKIREG(SBase, a)>();
+  ret.Register<S, &S::b, ENKIWRAP(SBase, a)>();
   return ret;
 }();
 

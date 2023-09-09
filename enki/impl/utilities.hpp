@@ -35,13 +35,11 @@ namespace enki
     static constexpr value_type getter(const T &inst) { return getter_fun(inst); }
     static constexpr void setter(T &inst, const value_type &val) { setter_fun(inst, val); }
   };
-} // namespace enki::details
+}
 
 #define ENKIWRAP(T, m)                                \
-  enki::MemberWrapper<T,                                    \
+  enki::MemberWrapper<T,                              \
                 [](const T& inst) { return inst.m; }, \
-                [](T& inst, auto& val) { inst.m = val; }>
-
-#define ENKIREG(T, m) ENKIWRAP(T, m){}
+                [](T& inst, auto& val) { inst.m = val; }>{}
 
 #endif // ENKI_UTILITIES_HPP
