@@ -15,6 +15,7 @@ TEST_CASE("Custom Type Register/Unregister")
 
   std::array<std::byte, 0> temp;
 
+  // Non registered type should not be serializable
   REQUIRE_THROWS(mgr.Serialize(S{}, temp.begin()).or_throw());
 
   mgr.Register<S>();
@@ -42,9 +43,6 @@ TEST_CASE("Custom Type Dynamic SerDes")
   std::array<std::byte, sizeof(decltype(S::i)) + sizeof(decltype(S::d))> temp{};
 
   auto mgr = enki::Manager{};
-
-  // Non registered type should not be serializable
-  REQUIRE_THROWS(mgr.Serialize(s1, temp.begin()).or_throw());
 
   mgr.Register<S, &S::i, &S::d>(); // you can register members in any order
   {
@@ -93,10 +91,46 @@ TEST_CASE("Custom Type with bit fields Dynamic Serdes")
 
   auto mgr = enki::Manager{};
 
-  // Non registered type should not be serializable
-  REQUIRE_THROWS(mgr.Serialize(s1, temp.begin()).or_throw());
-
   mgr.Register<S, ENKIWRAP(S, val)>(); // use ENKIWRAP to register bit field
+  {
+    const auto ser_res = mgr.Serialize(s1, temp.begin());
+    REQUIRE_NOTHROW(ser_res.or_throw());
+    REQUIRE(ser_res.size() == std::size(temp));
+    REQUIRE(ser_res.get_iterator() == temp.end());
+  }
+  {
+    const auto des_res = mgr.Deserialize(s2, temp.begin());
+    REQUIRE_NOTHROW(des_res.or_throw());
+    REQUIRE(des_res.size() == std::size(temp));
+    REQUIRE(des_res.get_iterator() == temp.end());
+  }
+
+  REQUIRE(s1 == s2);
+}
+
+TEST_CASE("Custom Type With Inherited Member Dynamic Serdes")
+{
+  struct SBase
+  {
+    int val;
+
+    constexpr bool operator==(const SBase &) const = default;
+  };
+
+  struct S : SBase
+  {
+    uint8_t val;
+
+    constexpr bool operator==(const S &) const = default;
+  };
+
+  S s1{{42}, 7};
+  S s2{};
+  std::array<std::byte, sizeof(decltype(SBase::val)) + sizeof(decltype(S::val))> temp{};
+
+  auto mgr = enki::Manager{};
+
+  mgr.Register<S, &SBase::val, &S::val>(); // use ENKIWRAP to register bit field
   {
     const auto ser_res = mgr.Serialize(s1, temp.begin());
     REQUIRE_NOTHROW(ser_res.or_throw());

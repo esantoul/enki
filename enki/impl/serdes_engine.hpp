@@ -43,7 +43,7 @@ namespace enki
         }
         else if constexpr (concepts::array_like<T>)
         {
-          Result<It> res{};
+          Result<It> res(0, out);
           std::all_of(std::begin(val), std::end(val), [this, &out, &res](const auto &el) {
             auto r = static_cast<This_t>(this)->Serialize(std::forward<decltype(el)>(el), out);
             out = r.get_iterator();
@@ -53,7 +53,7 @@ namespace enki
         }
         else if constexpr (concepts::range_constructible_container<T>)
         {
-          Result<It> res{};
+          Result<It> res(0, out);
           {
             const size_type numElements = [&val] {
               if constexpr (requires { std::size(val); })
@@ -94,7 +94,7 @@ namespace enki
         }
         else if constexpr (concepts::array_like<T>)
         {
-          Result<It> res{};
+          Result<It> res(0, in);
           std::all_of(std::begin(val), std::end(val), [this, &res, &in](auto &v) {
             auto r = static_cast<This_t>(this)->Deserialize(v, in);
             in = r.get_iterator();
@@ -104,22 +104,22 @@ namespace enki
         }
         else if constexpr (concepts::range_constructible_container<T>)
         {
-          size_type sz{};
-          Result<It> res;
+          size_type numElements{};
+          Result<It> res(0, in);
           {
-            auto r = static_cast<This_t>(this)->Deserialize(sz, in);
+            auto r = static_cast<This_t>(this)->Deserialize(numElements, in);
             in = r.get_iterator();
             res.update(r);
           }
           using value_type = details::assignable_value_t<T>;
-          value_type *temp = new value_type[sz];
-          if (std::all_of(temp, temp + sz, [this, &res, &in](auto &v) {
+          value_type *temp = new value_type[numElements];
+          if (std::all_of(temp, temp + numElements, [this, &res, &in](auto &v) {
             auto r = static_cast<This_t>(this)->Deserialize(v, in);
             in = r.get_iterator();
             return static_cast<bool>(res.update(r));
           }))
           {
-            val = T(temp, temp + sz);
+            val = T(temp, temp + numElements);
           }
           delete[] temp;
           return res;
@@ -135,7 +135,7 @@ namespace enki
       {
         if constexpr (concepts::arithmetic_or_enum<T>)
         {
-          return sizeof(T);
+          return {sizeof(T)};
         }
         else if constexpr (concepts::array_like<T>)
         {
@@ -148,26 +148,11 @@ namespace enki
         }
         else if constexpr (concepts::range_constructible_container<T>)
         {
-          const size_type numElements = [&val] {
-            if constexpr (requires { std::size(val); })
-            {
-              return std::size(val);
-            }
-            else
-            {
-              return std::distance(std::begin(val), std::end(val));
-            }
-          }();
-          if (numElements == 0)
-          {
-            return Result<void>{sizeof(size_type)};
-          }
-
-          Result<void> res = static_cast<This_t>(this)->NumBytes(*val.begin());
-          if (res)
-          {
-            res = res.size() * numElements + sizeof(size_type);
-          }
+          Result<void> res = static_cast<This_t>(this)->NumBytes(size_type{});
+          std::all_of(val.begin(), val.end(), [this, &res](const auto &el) {
+            auto r = static_cast<This_t>(this)->NumBytes(std::forward<decltype(el)>(el));
+            return static_cast<bool>(res.update(r));
+          });
           return res;
         }
         else if constexpr (concepts::tuple_like<T>)
@@ -196,7 +181,7 @@ namespace enki
       template <concepts::BasicSerializable T, concepts::ByteDataOutputIterator It, size_t... idx>
       constexpr Result<It> serialize_tuple_like(const T &val, It out, std::index_sequence<idx...>) const
       {
-        Result<It> res{};
+        Result<It> res(0, out);
         static_cast<void>((serialize_one_in_tuple_like<idx>(res, val, out) && ...));
         return res;
       }
@@ -204,7 +189,7 @@ namespace enki
       template <concepts::BasicSerializable T, concepts::ByteDataInputIterator It, size_t... idx>
       constexpr Result<It> deserialize_tuple_like(T &val, It in, std::index_sequence<idx...>) const
       {
-        Result<It> res{};
+        Result<It> res(0, in);
         static_cast<void>((deserialize_one_in_tuple_like<idx>(res, val, in) && ...));
         return res;
       }
@@ -212,7 +197,7 @@ namespace enki
       template <concepts::BasicSerializable T, size_t... idx>
       constexpr Result<void> num_bytes_tuple_like(const T &val, std::index_sequence<idx...>) const
       {
-        Result<void> res{};
+        Result<void> res(static_cast<size_t>(0));
         static_cast<void>((static_cast<bool>(res.update(static_cast<This_t>(this)->NumBytes(std::get<idx>(val)))) && ...));
         return res;
       }

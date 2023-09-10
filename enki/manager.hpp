@@ -142,6 +142,7 @@ namespace enki
 
       constexpr Result<AnyByteOutputIt> Serialize(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const final
       {
+        static_cast<void>(pMgr); // avoid unused variable warning
         Result<AnyByteOutputIt> res(0, out);
         // out underlying iterator is auto updated because out holds a reference to the original output iterator
         // see call to this very method
@@ -151,6 +152,7 @@ namespace enki
 
       constexpr Result<AnyByteInputIt> Deserialize(const Manager *pMgr, T &inst, AnyByteInputIt in) const final
       {
+        static_cast<void>(pMgr); // avoid unused variable warning
         Result<AnyByteInputIt> res(0, in);
         static_cast<void>(([this, pMgr, &res, &in, &inst] {
           auto r = Deserialize_one<mem>(pMgr, inst, in);
@@ -162,6 +164,7 @@ namespace enki
 
       constexpr Result<void> NumBytes(const Manager *pMgr, const T &inst) const final
       {
+        static_cast<void>(pMgr); // avoid unused variable warning
         Result<void> res{};
         static_cast<void>((static_cast<bool>(res.update(NumBytes_one<mem>(pMgr, inst))) && ...));
         return res;

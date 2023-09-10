@@ -19,7 +19,7 @@ namespace enki
     public:
       constexpr BaseResult() noexcept = default;
       constexpr BaseResult(const char *error_description) noexcept : mError(error_description) {}
-      constexpr BaseResult(size_t size) noexcept : mError(nullptr), mNumBytes(size) {}
+      constexpr BaseResult(size_t size) noexcept : mNumBytes(size) {}
 
 #if __cpp_exceptions >= 199711
       constexpr const Derived &or_throw() const
