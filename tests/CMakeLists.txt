@@ -12,14 +12,14 @@ include(CTest)
 # enable_testing()
 
 set(ENKI_REGRESSION_TESTS_SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/arithmetic_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/array_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_arithmetic_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_array_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_composite_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/custom_type_dynamic_register.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/enum_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_enum_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_range_constructible_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_tuple_like_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/manager_composite_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/range_constructible_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/tuple_like_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/manager_custom_type_register.cpp
 )
 
 add_executable(enki_regression_tests ${ENKI_REGRESSION_TESTS_SOURCES})

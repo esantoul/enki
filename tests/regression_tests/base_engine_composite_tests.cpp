@@ -9,7 +9,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Base Engine Composite Test")
+TEST_CASE("Base Engine Composite Test", "[base_engine]")
 {
   enum class Maths
   {

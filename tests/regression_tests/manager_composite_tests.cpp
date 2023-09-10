@@ -11,7 +11,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Manager Composite Test (Custom type at top of data hierarchy)")
+TEST_CASE("Manager Composite Test (Custom type at top of data hierarchy)", "[manager]")
 {
   struct S
   {
@@ -71,7 +71,7 @@ namespace
 #pragma pack(pop)
 }
 
-TEST_CASE("Manager Composite Test (Custom type at bottom of data hierarchy)")
+TEST_CASE("Manager Composite Test (Custom type at bottom of data hierarchy)", "[manager]")
 {
   std::unordered_map<std::string, TrackInfo> allSongs{
     std::make_pair("Electric anthem", TrackInfo{9999, TrackInfo::Style::Rock, 7}),

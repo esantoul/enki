@@ -11,7 +11,7 @@ enum class MyEnum : char
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Enumeration Serialization And Deserialization")
+TEST_CASE("Base Engine Enum SerDes", "[base_engine]")
 {
   MyEnum e1 = MyEnum::ONE;
   MyEnum e2 = MyEnum::TWO;

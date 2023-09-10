@@ -13,7 +13,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Range Constructible (std::vector) Serialization and Deserialization")
+TEST_CASE("Base Engine Range Constructible (std::vector) SerDes", "[base_engine]")
 {
   std::vector<int32_t> rc1{1337, -99};
   std::vector<int32_t> rc2;
@@ -35,7 +35,7 @@ TEST_CASE("Range Constructible (std::vector) Serialization and Deserialization")
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Range Constructible (std::set) Serialization and Deserialization")
+TEST_CASE("Base Engine Range Constructible (std::set) SerDes", "[base_engine]")
 {
   std::set<int32_t> rc1{1337, -99, 1337, 42};
   std::set<int32_t> rc2;
@@ -57,7 +57,7 @@ TEST_CASE("Range Constructible (std::set) Serialization and Deserialization")
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Range Constructible (std::multiset) Serialization and Deserialization")
+TEST_CASE("Base Engine Range Constructible (std::multiset) SerDes", "[base_engine]")
 {
   std::multiset<int32_t> rc1{1337, -99, 1337, 42};
   std::multiset<int32_t> rc2;
@@ -79,7 +79,7 @@ TEST_CASE("Range Constructible (std::multiset) Serialization and Deserialization
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Range Constructible (std::unordered_set) Serialization and Deserialization")
+TEST_CASE("Base Engine Range Constructible (std::unordered_set) SerDes", "[base_engine]")
 {
   std::unordered_set<int32_t> rc1{1337, -99, 1337, 42};
   std::unordered_set<int32_t> rc2;
@@ -101,7 +101,7 @@ TEST_CASE("Range Constructible (std::unordered_set) Serialization and Deserializ
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Range Constructible (std::unordered_multiset) Serialization and Deserialization")
+TEST_CASE("Base Engine Range Constructible (std::unordered_multiset) SerDes", "[base_engine]")
 {
   std::unordered_multiset<int32_t> rc1{1337, -99, 1337, 42};
   std::unordered_multiset<int32_t> rc2;
@@ -123,7 +123,7 @@ TEST_CASE("Range Constructible (std::unordered_multiset) Serialization and Deser
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Range Constructible (std::deque) Serialization and Deserialization")
+TEST_CASE("Base Engine Range Constructible (std::deque) SerDes", "[base_engine]")
 {
   std::deque<int32_t> rc1{1337, -99, 1337, 42};
   std::deque<int32_t> rc2;
@@ -145,7 +145,7 @@ TEST_CASE("Range Constructible (std::deque) Serialization and Deserialization")
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Range Constructible (std::forward_list) Serialization and Deserialization")
+TEST_CASE("Base Engine Range Constructible (std::forward_list) SerDes", "[base_engine]")
 {
   std::forward_list<int32_t> rc1{1337, -99, 1337, 42};
   std::forward_list<int32_t> rc2;
@@ -169,7 +169,7 @@ TEST_CASE("Range Constructible (std::forward_list) Serialization and Deserializa
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Range Constructible (std::list) Serialization and Deserialization")
+TEST_CASE("Base Engine Range Constructible (std::list) SerDes", "[base_engine]")
 {
   std::list<int32_t> rc1{1337, -99, 1337, 42};
   std::list<int32_t> rc2;

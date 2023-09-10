@@ -24,7 +24,7 @@ namespace
   }
 }
 
-TEST_CASE("Tuple Serialization And Deserialization")
+TEST_CASE("Base Engine Tuple SerDes", "[base_engine]")
 {
   std::tuple<double, uint8_t, uint64_t> t1{3.14, 42, std::numeric_limits<uint64_t>::max()};
   decltype(t1) t2{};
@@ -46,7 +46,7 @@ TEST_CASE("Tuple Serialization And Deserialization")
   REQUIRE(t1 == t2);
 }
 
-TEST_CASE("Pair Serialization And Deserialization")
+TEST_CASE("Base Engine Pair SerDes", "[base_engine]")
 {
   std::pair<int16_t, float> p1{-22, std::numeric_limits<float>::min()};
   decltype(p1) p2{};

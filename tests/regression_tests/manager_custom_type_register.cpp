@@ -7,7 +7,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Custom Type Register/Unregister")
+TEST_CASE("Manager Custom Type Register/Unregister", "[manager]")
 {
   struct S {};
 
@@ -28,7 +28,7 @@ TEST_CASE("Custom Type Register/Unregister")
   REQUIRE_THROWS(mgr.Serialize(S{}, temp.begin()).or_throw());
 }
 
-TEST_CASE("Custom Type Dynamic SerDes")
+TEST_CASE("Manager Custom Type Dynamic SerDes", "[manager]")
 {
   struct S
   {
@@ -73,7 +73,7 @@ TEST_CASE("Custom Type Dynamic SerDes")
   }
 }
 
-TEST_CASE("Custom Type with bit fields Dynamic Serdes")
+TEST_CASE("Manager Custom Type With Bit Field Dynamic Serdes", "[manager]")
 {
   struct S
   {
@@ -108,7 +108,7 @@ TEST_CASE("Custom Type with bit fields Dynamic Serdes")
   REQUIRE(s1 == s2);
 }
 
-TEST_CASE("Custom Type With Inherited Member Dynamic Serdes")
+TEST_CASE("Manager Custom Type With Inherited Member Dynamic Serdes", "[manager]")
 {
   struct SBase
   {

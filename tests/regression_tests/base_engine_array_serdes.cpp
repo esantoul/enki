@@ -7,7 +7,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("C-Array Serialization and Deserialization")
+TEST_CASE("Base Engine C-Array SerDes", "[base_engine]")
 {
   int64_t carr1[] = {1337, -99};
   int64_t carr2[std::size(carr1)]{};
@@ -28,7 +28,7 @@ TEST_CASE("C-Array Serialization and Deserialization")
   REQUIRE(std::equal(std::begin(carr1), std::end(carr1), std::begin(carr2)));
 }
 
-TEST_CASE("C++ Array (std::array) Serialization and Deserialization")
+TEST_CASE("Base Engine C++ Array (std::array) SerDes", "[base_engine]")
 {
   std::array<int64_t, 2> arr1 = {1337, -99};
   std::array<int64_t, 2> arr2{};

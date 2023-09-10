@@ -6,7 +6,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Arithmetic Type Serialization and Deserialization")
+TEST_CASE("Base Engine Arithmetic SerDes", "[base_engine]")
 {
   int32_t i = 42;
   int32_t j = 0;
