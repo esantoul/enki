@@ -1,13 +1,13 @@
 #ifndef ENKI_CONCEPTS_HPP
 #define ENKI_CONCEPTS_HPP
 
-#include <concepts>
-#include <type_traits>
-#include <tuple>
-#include <utility>
 #include <array>
-#include <variant>
+#include <concepts>
 #include <cstddef>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+#include <variant>
 
 namespace enki::concepts
 {
@@ -117,6 +117,9 @@ namespace enki::concepts
     (sizeof(details::iterator_underlying_t<It>) == 1) &&
     requires (It it) { static_cast<std::byte>(*it); } &&
     requires (It it, It it2) { it2 = it; };
+
+  template <typename It>
+  concept ByteDataIterator = ByteDataInputIterator<It> || ByteDataOutputIterator<It>;
 }
 
 namespace enki
@@ -149,7 +152,24 @@ namespace enki::concepts
   concept class_member =
     proper_member_wrapper<T, decltype(p)> ||
     (details::member_pointer<p>::value &&
-      std::same_as<typename details::member_pointer<p>::class_type, T>);
+      std::derived_from<T, typename details::member_pointer<p>::class_type>);
+
+  // namespace details
+  // {
+  //   template <typename T, size_t ... idx>
+  //   constexpr bool is_tuple_of_class_members(std::index_sequence<idx...>)
+  //   {
+  //     return (class_member<T, std::get<idx>(T::EnkiSerial::members)> && ...);
+  //   }
+  // }
+
+  // template <typename T>
+  // concept custom_static_serializable = requires (T inst)
+  // {
+  //   std::tuple_size<decltype(T::EnkiSerial::members)>::value;
+  // } &&
+  //   (std::tuple_size_v<decltype(T::EnkiSerial::members)> >= 1)
+  //   && details::is_tuple_of_class_members<T>(std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
 }
 
 #endif // ENKI_CONCEPTS_HPP

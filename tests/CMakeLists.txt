@@ -14,6 +14,7 @@ include(CTest)
 set(ENKI_REGRESSION_TESTS_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/arithmetic_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/array_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/custom_type_dynamic_register.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/enum_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/range_constructible_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/tuple_like_serdes.cpp
@@ -38,11 +39,11 @@ target_compile_options(enki_regression_tests PRIVATE
 
   # -Weffc++
 
-  # -fsanitize=undefined
+  -fsanitize=address
 )
 
 target_link_options(enki_regression_tests PRIVATE
-  # -fsanitize=undefined
+  -fsanitize=address
 )
 
 target_link_libraries(enki_regression_tests PRIVATE

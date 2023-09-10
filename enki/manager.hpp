@@ -30,8 +30,14 @@ namespace enki
       mConverters[Type::get_index<T>()] = &kSpecializedHandler<T, mem...>;
     }
 
+    template <typename T>
+    constexpr void Unregister()
+    {
+      mConverters.erase(Type::get_index<T>());
+    }
+
     template <typename T, concepts::ByteDataOutputIterator It>
-    constexpr std::pair<Result, It> Serialize(const T &val, It out) const
+    constexpr Result<It> Serialize(const T &val, It out) const
     {
       if constexpr (concepts::BasicSerializable<T>)
       {
@@ -41,17 +47,25 @@ namespace enki
       {
         if (auto it = mConverters.find(Type::get_index<T>()); it != mConverters.end())
         {
-          return {static_cast<const TypeSerDesHandler<T>*>(it->second)->Serialize(this, val, AnyByteOutputIt::Ref(out)), out};
+          auto res = static_cast<const TypeSerDesHandler<T>*>(it->second)->Serialize(this, val, AnyByteOutputIt::Ref(out));
+          if (res)
+          {
+            return {res.size(), out};
+          }
+          else
+          {
+            return res.error();
+          }
         }
         else
         {
-          return {serial_error<T>.begin(), out};
+          return serial_error<T>.begin();
         }
       }
     }
 
     template <typename T, concepts::ByteDataInputIterator It>
-    constexpr std::pair<Result, It> Deserialize(T &val, It in) const
+    constexpr Result<It> Deserialize(T &val, It in) const
     {
       if constexpr (concepts::BasicSerializable<T>)
       {
@@ -63,17 +77,24 @@ namespace enki
         {
           auto res = static_cast<const TypeSerDesHandler<T>*>(it->second)->Deserialize(this, val, in);
           std::advance(in, res.size());
-          return {res, in};
+          if (res)
+          {
+            return {res.size(), in};
+          }
+          else
+          {
+            return res.error();
+          }
         }
         else
         {
-          return {deserial_error<T>.begin(), in};
+          return deserial_error<T>.begin();
         }
       }
     }
 
     template <typename T>
-    constexpr Result NumBytes(const T &val) const
+    constexpr Result<void> NumBytes(const T &val) const
     {
       if constexpr (concepts::BasicSerializable<T>)
       {
@@ -108,9 +129,9 @@ namespace enki
     class TypeSerDesHandler : public BaseCustomSerDesHandler
     {
     public:
-      constexpr virtual Result Serialize(const Manager *, const T &, AnyByteOutputIt) const = 0;
-      constexpr virtual Result Deserialize(const Manager *, T &, AnyByteInputIt) const = 0;
-      constexpr virtual Result NumBytes(const Manager *, const T &) const = 0;
+      constexpr virtual Result<AnyByteOutputIt> Serialize(const Manager *, const T &, AnyByteOutputIt) const = 0;
+      constexpr virtual Result<AnyByteInputIt> Deserialize(const Manager *, T &, AnyByteInputIt) const = 0;
+      constexpr virtual Result<void> NumBytes(const Manager *, const T &) const = 0;
     };
 
     template <typename T, auto ... mem>
@@ -119,18 +140,18 @@ namespace enki
     public:
       constexpr ~SpecializedTypeSerDesHandler() = default;
 
-      constexpr Result Serialize(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const final
+      constexpr Result<AnyByteOutputIt> Serialize(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const final
       {
-        Result res{};
+        Result<AnyByteOutputIt> res(0, out);
         // out underlying iterator is auto updated because out holds a reference to the original output iterator
         // see call to this very method
         static_cast<void>((static_cast<bool>(res.update(Serialize_one<mem>(pMgr, inst, out))) && ...));
         return res;
       }
 
-      constexpr Result Deserialize(const Manager *pMgr, T &inst, AnyByteInputIt in) const final
+      constexpr Result<AnyByteInputIt> Deserialize(const Manager *pMgr, T &inst, AnyByteInputIt in) const final
       {
-        Result res{};
+        Result<AnyByteInputIt> res(0, in);
         static_cast<void>(([this, pMgr, &res, &in, &inst] {
           auto r = Deserialize_one<mem>(pMgr, inst, in);
           std::advance(in, r.size());
@@ -139,57 +160,54 @@ namespace enki
         return res;
       }
 
-      constexpr Result NumBytes(const Manager *pMgr, const T &inst) const final
+      constexpr Result<void> NumBytes(const Manager *pMgr, const T &inst) const final
       {
-        Result res{};
+        Result<void> res{};
         static_cast<void>((static_cast<bool>(res.update(NumBytes_one<mem>(pMgr, inst))) && ...));
         return res;
       }
 
     private:
       template <auto onemem>
-      constexpr Result Serialize_one(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
+      constexpr Result<AnyByteOutputIt> Serialize_one(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
       {
-        auto [r, _] = pMgr->Serialize(inst.*onemem, out);
+        return pMgr->Serialize(inst.*onemem, out);
         // out underlying iterator is auto updated because out holds a reference to the original output iterator
-        return r;
       }
 
       template <auto onemem>
         requires concepts::proper_member_wrapper<T, decltype(onemem)>
-      constexpr Result Serialize_one(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
+      constexpr Result<AnyByteOutputIt> Serialize_one(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
       {
-        auto [r, _] = pMgr->Serialize(onemem.getter(inst), out);
+        return pMgr->Serialize(onemem.getter(inst), out);
         // out underlying iterator is auto updated because out holds a reference to the original output iterator
-        return r;
       }
 
       template <auto onemem>
-      constexpr Result Deserialize_one(const Manager *pMgr, T &inst, AnyByteInputIt in) const
+      constexpr Result<AnyByteInputIt> Deserialize_one(const Manager *pMgr, T &inst, AnyByteInputIt in) const
       {
-        auto [r, _] = pMgr->Deserialize(inst.*onemem, in);
-        return r;
+        return pMgr->Deserialize(inst.*onemem, in);
       }
 
       template <auto onemem>
         requires concepts::proper_member_wrapper<T, decltype(onemem)>
-      constexpr Result Deserialize_one(const Manager *pMgr, T &inst, AnyByteInputIt in) const
+      constexpr Result<AnyByteInputIt> Deserialize_one(const Manager *pMgr, T &inst, AnyByteInputIt in) const
       {
         typename decltype(onemem)::value_type temp{};
-        auto [r, _] = pMgr->Deserialize(temp, in);
+        auto r = pMgr->Deserialize(temp, in);
         onemem.setter(inst, temp);
         return r;
       }
 
       template <auto onemem>
-      constexpr Result NumBytes_one(const Manager *pMgr, const T &inst) const
+      constexpr Result<void> NumBytes_one(const Manager *pMgr, const T &inst) const
       {
         return pMgr->NumBytes(inst.*onemem);
       }
 
       template <auto onemem>
         requires concepts::proper_member_wrapper<T, decltype(onemem)>
-      constexpr Result NumBytes_one(const Manager *pMgr, const T &inst) const
+      constexpr Result<void> NumBytes_one(const Manager *pMgr, const T &inst) const
       {
         return pMgr->NumBytes(onemem.getter(inst));
       }

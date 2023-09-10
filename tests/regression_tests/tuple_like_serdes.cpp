@@ -30,14 +30,18 @@ TEST_CASE("Tuple Serialization And Deserialization")
   decltype(t1) t2{};
   std::array<std::byte, sum_tuple_element_sizes(t1)> temp{};
 
-  const auto ser_res = enki::BaseEngine::Serialize(t1, temp.begin()).first;
-  REQUIRE_NOTHROW(ser_res.or_throw());
-  REQUIRE(ser_res.size() == sizeof(temp));
-
-
-  const auto des_res = enki::BaseEngine::Deserialize(t2, temp.begin()).first;
-  REQUIRE_NOTHROW(des_res.or_throw());
-  REQUIRE(des_res.size() == sizeof(temp));
+  {
+    const auto ser_res = enki::BaseEngine::Serialize(t1, temp.begin());
+    REQUIRE_NOTHROW(ser_res.or_throw());
+    REQUIRE(ser_res.size() == sizeof(temp));
+    REQUIRE(ser_res.get_iterator() == temp.end());
+  }
+  {
+    const auto des_res = enki::BaseEngine::Deserialize(t2, temp.begin());
+    REQUIRE_NOTHROW(des_res.or_throw());
+    REQUIRE(des_res.size() == sizeof(temp));
+    REQUIRE(des_res.get_iterator() == temp.end());
+  }
 
   REQUIRE(t1 == t2);
 }
@@ -48,14 +52,18 @@ TEST_CASE("Pair Serialization And Deserialization")
   decltype(p1) p2{};
   std::array<std::byte, sum_tuple_element_sizes(p1)> temp{};
 
-  const auto ser_res = enki::BaseEngine::Serialize(p1, temp.begin()).first;
-  REQUIRE_NOTHROW(ser_res.or_throw());
-  REQUIRE(ser_res.size() == sizeof(temp));
-
-
-  const auto des_res = enki::BaseEngine::Deserialize(p2, temp.begin()).first;
-  REQUIRE_NOTHROW(des_res.or_throw());
-  REQUIRE(des_res.size() == sizeof(temp));
+  {
+    const auto ser_res = enki::BaseEngine::Serialize(p1, temp.begin());
+    REQUIRE_NOTHROW(ser_res.or_throw());
+    REQUIRE(ser_res.size() == sizeof(temp));
+    REQUIRE(ser_res.get_iterator() == temp.end());
+  }
+  {
+    const auto des_res = enki::BaseEngine::Deserialize(p2, temp.begin());
+    REQUIRE_NOTHROW(des_res.or_throw());
+    REQUIRE(des_res.size() == sizeof(temp));
+    REQUIRE(des_res.get_iterator() == temp.end());
+  }
 
   REQUIRE(p1 == p2);
 }

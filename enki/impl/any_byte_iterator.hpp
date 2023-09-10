@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 
 #include "enki/impl/concepts.hpp"
 
@@ -142,19 +143,27 @@ namespace enki
       constexpr ~SpecializedByteInputIt() {};  // necessary because of a bug in gcc version <= 12
       constexpr SpecializedByteInputIt(It it)
         :
-        mIt(it),
-        mCurrentValue(static_cast<std::byte>(*mIt))
+        mIt(it)
       {
       }
-      constexpr const std::byte &operator*() const final { return mCurrentValue; }
-      constexpr SpecializedByteInputIt &operator++() final { ++mIt; mCurrentValue = static_cast<std::byte>(*mIt); return *this; }
+
+      constexpr const std::byte &operator*() const final
+      {
+        if (!mCurrentValue)
+        {
+          mCurrentValue = static_cast<std::byte>(*mIt);
+        }
+        return mCurrentValue.value();
+      }
+
+      constexpr SpecializedByteInputIt &operator++() final { ++mIt; mCurrentValue.reset(); return *this; }
 
     private:
       constexpr SpecializedByteInputIt *clone() final { return new SpecializedByteInputIt(mIt); }
       constexpr const void *address() const { return &*mIt; }
 
       It mIt;
-      std::byte mCurrentValue{};
+      mutable std::optional<std::byte> mCurrentValue{};
     };
   }
 
