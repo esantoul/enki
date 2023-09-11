@@ -11,9 +11,9 @@ enum class MyEnum : char
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Base Engine Enum SerDes", "[base_engine]")
+TEST_CASE("Base Engine Enum SerDes", "[base_engine][regression]")
 {
-  MyEnum e1 = MyEnum::ONE;
+  const MyEnum e1 = MyEnum::ONE;
   MyEnum e2 = MyEnum::TWO;
   std::array<std::byte, 1> temp{};
 

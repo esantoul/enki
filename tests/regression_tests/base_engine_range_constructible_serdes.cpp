@@ -13,9 +13,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Base Engine Range Constructible (std::vector) SerDes", "[base_engine]")
+TEST_CASE("Base Engine Range Constructible (std::vector) SerDes", "[base_engine][regression]")
 {
-  std::vector<int32_t> rc1{1337, -99};
+  const std::vector<int32_t> rc1{1337, -99};
   std::vector<int32_t> rc2;
   std::vector<std::byte> temp(sizeof(enki::BaseEngine::size_type) + sizeof(decltype(rc1)::value_type) * std::size(rc1));
 
@@ -35,9 +35,9 @@ TEST_CASE("Base Engine Range Constructible (std::vector) SerDes", "[base_engine]
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Base Engine Range Constructible (std::set) SerDes", "[base_engine]")
+TEST_CASE("Base Engine Range Constructible (std::set) SerDes", "[base_engine][regression]")
 {
-  std::set<int32_t> rc1{1337, -99, 1337, 42};
+  const std::set<int32_t> rc1{1337, -99, 1337, 42};
   std::set<int32_t> rc2;
   std::vector<std::byte> temp(sizeof(enki::BaseEngine::size_type) + sizeof(decltype(rc1)::value_type) * std::size(rc1));
 
@@ -57,9 +57,9 @@ TEST_CASE("Base Engine Range Constructible (std::set) SerDes", "[base_engine]")
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Base Engine Range Constructible (std::multiset) SerDes", "[base_engine]")
+TEST_CASE("Base Engine Range Constructible (std::multiset) SerDes", "[base_engine][regression]")
 {
-  std::multiset<int32_t> rc1{1337, -99, 1337, 42};
+  const std::multiset<int32_t> rc1{1337, -99, 1337, 42};
   std::multiset<int32_t> rc2;
   std::vector<std::byte> temp(sizeof(enki::BaseEngine::size_type) + sizeof(decltype(rc1)::value_type) * std::size(rc1));
 
@@ -79,9 +79,9 @@ TEST_CASE("Base Engine Range Constructible (std::multiset) SerDes", "[base_engin
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Base Engine Range Constructible (std::unordered_set) SerDes", "[base_engine]")
+TEST_CASE("Base Engine Range Constructible (std::unordered_set) SerDes", "[base_engine][regression]")
 {
-  std::unordered_set<int32_t> rc1{1337, -99, 1337, 42};
+  const std::unordered_set<int32_t> rc1{1337, -99, 1337, 42};
   std::unordered_set<int32_t> rc2;
   std::vector<std::byte> temp(sizeof(enki::BaseEngine::size_type) + sizeof(decltype(rc1)::value_type) * std::size(rc1));
 
@@ -101,9 +101,9 @@ TEST_CASE("Base Engine Range Constructible (std::unordered_set) SerDes", "[base_
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Base Engine Range Constructible (std::unordered_multiset) SerDes", "[base_engine]")
+TEST_CASE("Base Engine Range Constructible (std::unordered_multiset) SerDes", "[base_engine][regression]")
 {
-  std::unordered_multiset<int32_t> rc1{1337, -99, 1337, 42};
+  const std::unordered_multiset<int32_t> rc1{1337, -99, 1337, 42};
   std::unordered_multiset<int32_t> rc2;
   std::vector<std::byte> temp(sizeof(enki::BaseEngine::size_type) + sizeof(decltype(rc1)::value_type) * std::size(rc1));
 
@@ -123,9 +123,9 @@ TEST_CASE("Base Engine Range Constructible (std::unordered_multiset) SerDes", "[
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Base Engine Range Constructible (std::deque) SerDes", "[base_engine]")
+TEST_CASE("Base Engine Range Constructible (std::deque) SerDes", "[base_engine][regression]")
 {
-  std::deque<int32_t> rc1{1337, -99, 1337, 42};
+  const std::deque<int32_t> rc1{1337, -99, 1337, 42};
   std::deque<int32_t> rc2;
   std::vector<std::byte> temp(sizeof(enki::BaseEngine::size_type) + sizeof(decltype(rc1)::value_type) * std::size(rc1));
 
@@ -145,9 +145,9 @@ TEST_CASE("Base Engine Range Constructible (std::deque) SerDes", "[base_engine]"
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Base Engine Range Constructible (std::forward_list) SerDes", "[base_engine]")
+TEST_CASE("Base Engine Range Constructible (std::forward_list) SerDes", "[base_engine][regression]")
 {
-  std::forward_list<int32_t> rc1{1337, -99, 1337, 42};
+  const std::forward_list<int32_t> rc1{1337, -99, 1337, 42};
   std::forward_list<int32_t> rc2;
 
   const auto rc1_size = std::distance(std::begin(rc1), std::end(rc1));
@@ -169,9 +169,9 @@ TEST_CASE("Base Engine Range Constructible (std::forward_list) SerDes", "[base_e
   REQUIRE(rc1 == rc2);
 }
 
-TEST_CASE("Base Engine Range Constructible (std::list) SerDes", "[base_engine]")
+TEST_CASE("Base Engine Range Constructible (std::list) SerDes", "[base_engine][regression]")
 {
-  std::list<int32_t> rc1{1337, -99, 1337, 42};
+  const std::list<int32_t> rc1{1337, -99, 1337, 42};
   std::list<int32_t> rc2;
   std::vector<std::byte> temp(sizeof(enki::BaseEngine::size_type) + sizeof(decltype(rc1)::value_type) * std::size(rc1));
 

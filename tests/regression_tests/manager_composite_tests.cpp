@@ -1,17 +1,18 @@
+#include <array>
 #include <cstddef>
 #include <cstdint>
-#include <array>
-#include <unordered_map>
+#include <limits>
 #include <numbers>
 #include <numeric>
-#include <limits>
+#include <type_traits>
+#include <unordered_map>
 #include <vector>
 
 #include "enki/manager.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Manager Composite Test (Custom type at top of data hierarchy)", "[manager]")
+TEST_CASE("Manager Composite Test (Custom type at top of data hierarchy)", "[manager][regression]")
 {
   struct S
   {
@@ -21,8 +22,8 @@ TEST_CASE("Manager Composite Test (Custom type at top of data hierarchy)", "[man
     bool operator==(const S &) const = default;
   };
 
-  S s1{{-2.0, 13.37}, std::numeric_limits<uint32_t>::max()};
-  decltype(s1) s2;
+  const S s1{{-2.0, 13.37}, std::numeric_limits<uint32_t>::max()};
+  std::remove_cvref_t<decltype(s1)> s2;
 
   const size_t totalSerSize =
     sizeof(enki::Manager<>::size_type) + std::size(s1.numbers) * sizeof(decltype(s1.numbers)::value_type) +
@@ -71,14 +72,14 @@ namespace
 #pragma pack(pop)
 }
 
-TEST_CASE("Manager Composite Test (Custom type at bottom of data hierarchy)", "[manager]")
+TEST_CASE("Manager Composite Test (Custom type at bottom of data hierarchy)", "[manager][regression]")
 {
-  std::unordered_map<std::string, TrackInfo> allSongs{
+  const std::unordered_map<std::string, TrackInfo> allSongs{
     std::make_pair("Electric anthem", TrackInfo{9999, TrackInfo::Style::Rock, 7}),
     std::make_pair("Mozenhelm no.3", TrackInfo{47, TrackInfo::Style::Classic, 12})
   };
 
-  decltype(allSongs) allSongs2;
+  std::remove_cvref_t<decltype(allSongs)> allSongs2;
 
   auto mgr = enki::Manager{};
   mgr.Register<TrackInfo, ENKIWRAP(TrackInfo, style), ENKIWRAP(TrackInfo, rating), &TrackInfo::playCount>();

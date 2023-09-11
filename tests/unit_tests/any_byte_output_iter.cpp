@@ -10,7 +10,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Any Byte Output Iterator Works With Any Byte Type", "[any_byte_iterator]")
+TEST_CASE("Any Byte Output Iterator Works With Any Byte Type", "[any_byte_iterator][unit]")
 {
   static constexpr size_t kNumElements = 16;
 
@@ -45,7 +45,7 @@ TEST_CASE("Any Byte Output Iterator Works With Any Byte Type", "[any_byte_iterat
   }));
 }
 
-TEST_CASE("Any Byte Output Iterator Properly Mirrors Behaviour", "[any_byte_iterator]")
+TEST_CASE("Any Byte Output Iterator Properly Mirrors Behaviour", "[any_byte_iterator][unit]")
 {
   std::vector<uint8_t> v1(16);
   std::vector<char> v2;

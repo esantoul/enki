@@ -6,9 +6,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Base Engine Arithmetic SerDes", "[base_engine]")
+TEST_CASE("Base Engine Arithmetic SerDes", "[base_engine][regression]")
 {
-  int32_t i = 42;
+  const int32_t i = 42;
   int32_t j = 0;
   std::array<std::byte, 4> temp{};
 

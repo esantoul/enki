@@ -73,7 +73,8 @@
     "regex": "cpp",
     "fstream": "cpp",
     "future": "cpp",
-    "iomanip": "cpp"
+    "iomanip": "cpp",
+    "span": "cpp"
   },
   "editor.formatOnSave": true,
   "cmake.configureOnOpen": false,

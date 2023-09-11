@@ -1,15 +1,16 @@
+#include <array>
 #include <cstddef>
 #include <cstdint>
-#include <array>
-#include <unordered_map>
 #include <numbers>
 #include <numeric>
+#include <type_traits>
+#include <unordered_map>
 
 #include "enki/base_engine.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Base Engine Composite Test", "[base_engine]")
+TEST_CASE("Base Engine Composite Test", "[base_engine][regression]")
 {
   enum class Maths
   {
@@ -17,11 +18,11 @@ TEST_CASE("Base Engine Composite Test", "[base_engine]")
     euler
   };
 
-  std::unordered_map<Maths, std::vector<double>> m1{
+  const std::unordered_map<Maths, std::vector<double>> m1{
     std::make_pair(Maths::pythagora, std::vector<double>{std::numbers::pi}),
     std::make_pair(Maths::euler, std::vector<double>{std::numbers::e, 1.0 / std::numbers::e})};
 
-  decltype(m1) m2;
+  std::remove_cvref_t<decltype(m1)> m2;
 
   const size_t totalSerSize =
     std::accumulate(

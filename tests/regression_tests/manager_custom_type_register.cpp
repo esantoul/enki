@@ -7,7 +7,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Manager Custom Type Register/Unregister", "[manager]")
+TEST_CASE("Manager Custom Type Register/Unregister", "[manager][regression]")
 {
   struct S {};
 
@@ -28,7 +28,7 @@ TEST_CASE("Manager Custom Type Register/Unregister", "[manager]")
   REQUIRE_THROWS(mgr.Serialize(S{}, temp.begin()).or_throw());
 }
 
-TEST_CASE("Manager Custom Type Dynamic SerDes", "[manager]")
+TEST_CASE("Manager Custom Type Dynamic SerDes", "[manager][regression]")
 {
   struct S
   {
@@ -38,7 +38,7 @@ TEST_CASE("Manager Custom Type Dynamic SerDes", "[manager]")
     constexpr bool operator==(const S &) const = default;
   };
 
-  S s1{3.14, 42};
+  const S s1{3.14, 42};
   S s2{};
   std::array<std::byte, sizeof(decltype(S::i)) + sizeof(decltype(S::d))> temp{};
 
@@ -73,7 +73,7 @@ TEST_CASE("Manager Custom Type Dynamic SerDes", "[manager]")
   }
 }
 
-TEST_CASE("Manager Custom Type With Bit Field Dynamic Serdes", "[manager]")
+TEST_CASE("Manager Custom Type With Bit Field Dynamic Serdes", "[manager][regression]")
 {
   struct S
   {
@@ -108,7 +108,7 @@ TEST_CASE("Manager Custom Type With Bit Field Dynamic Serdes", "[manager]")
   REQUIRE(s1 == s2);
 }
 
-TEST_CASE("Manager Custom Type With Inherited Member Dynamic Serdes", "[manager]")
+TEST_CASE("Manager Custom Type With Inherited Member Dynamic Serdes", "[manager][regression]")
 {
   struct SBase
   {
@@ -124,7 +124,7 @@ TEST_CASE("Manager Custom Type With Inherited Member Dynamic Serdes", "[manager]
     constexpr bool operator==(const S &) const = default;
   };
 
-  S s1{{42}, 7};
+  const S s1{{42}, 7};
   S s2{};
   std::array<std::byte, sizeof(decltype(SBase::val)) + sizeof(decltype(S::val))> temp{};
 

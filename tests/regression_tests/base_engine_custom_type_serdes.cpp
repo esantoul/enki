@@ -24,12 +24,13 @@ namespace
     constexpr bool operator==(const MyClass &) const = default;
 
     struct EnkiSerial;
-    struct SerLayout;
 
     constexpr int get_int() const { return i; }
     constexpr double get_double() const { return d; }
 
   private:
+    friend struct SerLayout;
+
     double d{};
     int i{};
   };
@@ -39,16 +40,16 @@ namespace
     static constexpr auto members = std::make_tuple(&MyClass::i, &MyClass::d);
   };
 
-  struct MyClass::SerLayout
+  struct SerLayout
   {
     std::array<std::byte, sizeof(decltype(MyClass::i))> i;  // MyClass::i should be serialized first
     std::array<std::byte, sizeof(decltype(MyClass::d))> d;  // MyClass::d should be serialized second
   };
 }
 
-TEST_CASE("Base Engine Custom Type SerDes", "[manager]")
+TEST_CASE("Base Engine Custom Type SerDes", "[manager][regression]")
 {
-  MyClass c1{3.14, 42};
+  const MyClass c1{3.14, 42};
   MyClass c2{};
 
   static constexpr size_t numBytesS = enki::BaseEngine::NumBytes(MyClass{}).size();
@@ -71,7 +72,7 @@ TEST_CASE("Base Engine Custom Type SerDes", "[manager]")
 
   // order of registration should be preserved
   {
-    const auto &serializedLayout = std::bit_cast<MyClass::SerLayout>(temp);
+    const auto &serializedLayout = std::bit_cast<SerLayout>(temp);
     REQUIRE(c1.get_int() == std::bit_cast<int>(serializedLayout.i));
     REQUIRE(c1.get_double() == std::bit_cast<double>(serializedLayout.d));
   }

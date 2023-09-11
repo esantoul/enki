@@ -1,9 +1,10 @@
+#include <array>
 #include <cstddef>
 #include <cstdint>
-#include <array>
-#include <tuple>
-#include <utility>
 #include <limits>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 #include "enki/base_engine.hpp"
 
@@ -24,10 +25,10 @@ namespace
   }
 }
 
-TEST_CASE("Base Engine Tuple SerDes", "[base_engine]")
+TEST_CASE("Base Engine Tuple SerDes", "[base_engine][regression]")
 {
-  std::tuple<double, uint8_t, uint64_t> t1{3.14, 42, std::numeric_limits<uint64_t>::max()};
-  decltype(t1) t2{};
+  const auto t1 = std::make_tuple(3.14, 42, std::numeric_limits<uint64_t>::max());
+  std::remove_cvref_t<decltype(t1)> t2{};
   std::array<std::byte, sum_tuple_element_sizes(t1)> temp{};
 
   {
@@ -46,10 +47,10 @@ TEST_CASE("Base Engine Tuple SerDes", "[base_engine]")
   REQUIRE(t1 == t2);
 }
 
-TEST_CASE("Base Engine Pair SerDes", "[base_engine]")
+TEST_CASE("Base Engine Pair SerDes", "[base_engine][regression]")
 {
-  std::pair<int16_t, float> p1{-22, std::numeric_limits<float>::min()};
-  decltype(p1) p2{};
+  const std::pair<int16_t, float> p1{-22, std::numeric_limits<float>::min()};
+  std::remove_cvref_t<decltype(p1)> p2{};
   std::array<std::byte, sum_tuple_element_sizes(p1)> temp{};
 
   {
