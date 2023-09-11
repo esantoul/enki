@@ -54,12 +54,12 @@ namespace enki
           }
           else
           {
-            return res.error();
+            return {res.error(), out};
           }
         }
         else
         {
-          return serial_error<T>.begin();
+          return {serial_error<T>.begin(), out};
         }
       }
     }
@@ -83,12 +83,12 @@ namespace enki
           }
           else
           {
-            return res.error();
+            return {res.error(), in};
           }
         }
         else
         {
-          return deserial_error<T>.begin();
+          return {deserial_error<T>.begin(), in};
         }
       }
     }
@@ -143,7 +143,7 @@ namespace enki
       constexpr Result<AnyByteOutputIt> Serialize(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const final
       {
         static_cast<void>(pMgr); // avoid unused variable warning
-        Result<AnyByteOutputIt> res(0, out);
+        Result<AnyByteOutputIt> res(static_cast<size_t>(0), out);
         // out underlying iterator is auto updated because out holds a reference to the original output iterator
         // see call to this very method
         static_cast<void>((static_cast<bool>(res.update(Serialize_one<mem>(pMgr, inst, out))) && ...));
@@ -153,7 +153,7 @@ namespace enki
       constexpr Result<AnyByteInputIt> Deserialize(const Manager *pMgr, T &inst, AnyByteInputIt in) const final
       {
         static_cast<void>(pMgr); // avoid unused variable warning
-        Result<AnyByteInputIt> res(0, in);
+        Result<AnyByteInputIt> res(static_cast<size_t>(0), in);
         static_cast<void>(([this, pMgr, &res, &in, &inst] {
           auto r = Deserialize_one<mem>(pMgr, inst, in);
           std::advance(in, r.size());

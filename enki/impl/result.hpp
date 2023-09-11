@@ -75,7 +75,7 @@ namespace enki
 
   public:
     constexpr Result() noexcept = default;
-    constexpr Result(const char *error_description) noexcept : Base_t(error_description) {}
+    constexpr Result(const char *error_description, It iterator) noexcept : Base_t(error_description), mIt(iterator) {}
     constexpr Result(size_t size, It iterator) noexcept : Base_t(size), mIt(iterator) {}
 
     constexpr Result &update(const Result &other) noexcept

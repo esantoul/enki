@@ -30,6 +30,12 @@ namespace enki
     }
 
   private:
+    constexpr BaseEngine() = default;
+    constexpr BaseEngine(const BaseEngine &) = delete;
+    constexpr BaseEngine(BaseEngine &&) = delete;
+    constexpr BaseEngine &operator=(const BaseEngine &) = delete;
+    constexpr BaseEngine &operator=(BaseEngine &&) = delete;
+
     template <concepts::BasicSerializable T, concepts::ByteDataOutputIterator It>
     constexpr Result<It> Serialize_impl(const T &val, It out) const
     {
