@@ -65,7 +65,15 @@
     "sstream": "cpp",
     "stop_token": "cpp",
     "thread": "cpp",
-    "any": "cpp"
+    "any": "cpp",
+    "bitset": "cpp",
+    "forward_list": "cpp",
+    "set": "cpp",
+    "unordered_set": "cpp",
+    "regex": "cpp",
+    "fstream": "cpp",
+    "future": "cpp",
+    "iomanip": "cpp"
   },
   "editor.formatOnSave": true,
   "cmake.configureOnOpen": false,
