@@ -80,6 +80,10 @@ namespace enki
         {
           return serialize_tuple_like(val, out, std::make_index_sequence<std::tuple_size_v<T>>());
         }
+        else if constexpr (concepts::custom_static_serializable<T>)
+        {
+          return serialize_custom_serializable(val, out, std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
+        }
       }
 
       template <concepts::BasicSerializable T, concepts::ByteDataInputIterator It>
@@ -128,6 +132,10 @@ namespace enki
         {
           return deserialize_tuple_like(val, in, std::make_index_sequence<std::tuple_size_v<T>>());
         }
+        else if constexpr (concepts::custom_static_serializable<T>)
+        {
+          return deserialize_custom_serializable(val, in, std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
+        }
       }
 
       template <concepts::BasicSerializable T>
@@ -159,6 +167,10 @@ namespace enki
         {
           return num_bytes_tuple_like(val, std::make_index_sequence<std::tuple_size_v<T>>());
         }
+        else if constexpr (concepts::custom_static_serializable<T>)
+        {
+          return num_bytes_custom_serializable(val, std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
+        }
       }
 
     private:
@@ -170,20 +182,20 @@ namespace enki
         return static_cast<bool>(res.update(r));
       }
 
-      template <size_t i, concepts::BasicSerializable T, concepts::ByteDataInputIterator It>
-      constexpr bool deserialize_one_in_tuple_like(Result<It> &res, T &val, It &in) const
-      {
-        auto r = static_cast<This_t>(this)->Deserialize(std::get<i>(val), in);
-        in = r.get_iterator();
-        return static_cast<bool>(res.update(r));
-      }
-
       template <concepts::BasicSerializable T, concepts::ByteDataOutputIterator It, size_t... idx>
       constexpr Result<It> serialize_tuple_like(const T &val, It out, std::index_sequence<idx...>) const
       {
         Result<It> res(0, out);
         static_cast<void>((serialize_one_in_tuple_like<idx>(res, val, out) && ...));
         return res;
+      }
+
+      template <size_t i, concepts::BasicSerializable T, concepts::ByteDataInputIterator It>
+      constexpr bool deserialize_one_in_tuple_like(Result<It> &res, T &val, It &in) const
+      {
+        auto r = static_cast<This_t>(this)->Deserialize(std::get<i>(val), in);
+        in = r.get_iterator();
+        return static_cast<bool>(res.update(r));
       }
 
       template <concepts::BasicSerializable T, concepts::ByteDataInputIterator It, size_t... idx>
@@ -199,6 +211,87 @@ namespace enki
       {
         Result<void> res(static_cast<size_t>(0));
         static_cast<void>((static_cast<bool>(res.update(static_cast<This_t>(this)->NumBytes(std::get<idx>(val)))) && ...));
+        return res;
+      }
+
+      template <auto onemem, concepts::custom_static_serializable T, concepts::ByteDataOutputIterator It>
+      constexpr Result<It> serialize_one_custom_serializable(const T &inst, It &out) const
+      {
+        auto r = static_cast<This_t>(this)->Serialize(inst.*onemem, out);
+        out = r.get_iterator();
+        return r;
+      }
+
+      template <auto onemem, concepts::custom_static_serializable T, concepts::ByteDataOutputIterator It>
+        requires concepts::proper_member_wrapper<T, decltype(onemem)>
+      constexpr Result<It> serialize_one_custom_serializable(const T &inst, It &out) const
+      {
+        auto r = static_cast<This_t>(this)->Serialize(onemem.getter(inst), out);
+        out = r.get_iterator();
+        return r;
+      }
+
+      template <concepts::custom_static_serializable T, concepts::ByteDataOutputIterator It, size_t... idx>
+      constexpr Result<It> serialize_custom_serializable(const T &inst, It out, std::index_sequence<idx...>) const
+      {
+        Result<It> res(0, out);
+        // out iterator is auto in calls to serialize_one_custom_serializable
+        static_cast<void>((
+          static_cast<bool>(res.update(serialize_one_custom_serializable<std::get<idx>(T::EnkiSerial::members)>(inst, out)))
+          && ...));
+        return res;
+      }
+
+      template <auto onemem, concepts::custom_static_serializable T, concepts::ByteDataInputIterator It>
+      constexpr Result<It> deserialize_one_custom_serializable(T &inst, It &in) const
+      {
+        auto r = static_cast<This_t>(this)->Deserialize(inst.*onemem, in);
+        in = r.get_iterator();
+        return r;
+      }
+
+      template <auto onemem, concepts::custom_static_serializable T, concepts::ByteDataInputIterator It>
+        requires concepts::proper_member_wrapper<T, decltype(onemem)>
+      constexpr Result<It> deserialize_one_custom_serializable(T &inst, It &in) const
+      {
+        typename decltype(onemem)::value_type temp{};
+        auto r = static_cast<This_t>(this)->Deserialize(temp, in);
+        onemem.setter(inst, temp);
+        in = r.get_iterator();
+        return r;
+      }
+
+      template <concepts::custom_static_serializable T, concepts::ByteDataInputIterator It, size_t... idx>
+      constexpr Result<It> deserialize_custom_serializable(T &inst, It in, std::index_sequence<idx...>) const
+      {
+        Result<It> res(0, in);
+        // in iterator is auto in calls to deserialize_one_custom_serializable
+        static_cast<void>((
+          static_cast<bool>(res.update(deserialize_one_custom_serializable<std::get<idx>(T::EnkiSerial::members)>(inst, in)))
+          && ...));
+        return res;
+      }
+
+      template <auto onemem, concepts::custom_static_serializable T>
+      constexpr Result<void> num_bytes_one_custom_serializable(const T &inst) const
+      {
+        return static_cast<This_t>(this)->NumBytes(inst.*onemem);
+      }
+
+      template <auto onemem, concepts::custom_static_serializable T>
+        requires concepts::proper_member_wrapper<T, decltype(onemem)>
+      constexpr Result<void> num_bytes_one_custom_serializable(const T &inst) const
+      {
+        return static_cast<This_t>(this)->NumBytes(onemem.getter(inst));
+      }
+
+      template <concepts::custom_static_serializable T, size_t... idx>
+      constexpr Result<void> num_bytes_custom_serializable(const T &inst, std::index_sequence<idx...>) const
+      {
+        Result<void> res(static_cast<size_t>(0));
+        static_cast<void>((
+          static_cast<bool>(res.update(num_bytes_one_custom_serializable<std::get<idx>(T::EnkiSerial::members)>(inst)))
+          && ...));
         return res;
       }
     };

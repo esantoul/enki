@@ -75,9 +75,6 @@ namespace enki::concepts
   } &&
     details::all_variant_indexes_good<T>(std::make_index_sequence<std::variant_size_v<T>>());
 
-  template <typename T>
-  concept BasicSerializable = arithmetic_or_enum<T> || array_like<T> || range_constructible_container<T> || tuple_like<T>;
-
   namespace details
   {
     template <typename It>
@@ -154,22 +151,30 @@ namespace enki::concepts
     (details::member_pointer<p>::value &&
       std::derived_from<T, typename details::member_pointer<p>::class_type>);
 
-  // namespace details
-  // {
-  //   template <typename T, size_t ... idx>
-  //   constexpr bool is_tuple_of_class_members(std::index_sequence<idx...>)
-  //   {
-  //     return (class_member<T, std::get<idx>(T::EnkiSerial::members)> && ...);
-  //   }
-  // }
+  namespace details
+  {
+    template <typename T, size_t ... idx>
+    constexpr bool is_tuple_of_class_members(std::index_sequence<idx...>)
+    {
+      return (class_member<T, std::get<idx>(T::EnkiSerial::members)> && ...);
+    }
+  }
 
-  // template <typename T>
-  // concept custom_static_serializable = requires (T inst)
-  // {
-  //   std::tuple_size<decltype(T::EnkiSerial::members)>::value;
-  // } &&
-  //   (std::tuple_size_v<decltype(T::EnkiSerial::members)> >= 1)
-  //   && details::is_tuple_of_class_members<T>(std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
+  template <typename T>
+  concept custom_static_serializable = requires (T inst)
+  {
+    std::tuple_size<decltype(T::EnkiSerial::members)>::value;
+  } &&
+    (std::tuple_size_v<decltype(T::EnkiSerial::members)> >= 1)
+    && details::is_tuple_of_class_members<T>(std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
+
+  template <typename T>
+  concept BasicSerializable =
+    arithmetic_or_enum<T> ||
+    array_like<T> ||
+    range_constructible_container<T> ||
+    tuple_like<T> ||
+    custom_static_serializable<T>;
 }
 
 #endif // ENKI_CONCEPTS_HPP
