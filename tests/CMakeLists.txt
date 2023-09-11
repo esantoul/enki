@@ -22,6 +22,7 @@ set(ENKI_REGRESSION_TESTS_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/manager_composite_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/manager_custom_type_register.cpp
 
+  ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/any_byte_input_iter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/any_byte_output_iter.cpp
 )
 
