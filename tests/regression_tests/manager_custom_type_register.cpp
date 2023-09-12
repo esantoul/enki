@@ -130,7 +130,7 @@ TEST_CASE("Manager Custom Type With Inherited Member Dynamic Serdes", "[manager]
 
   auto mgr = enki::Manager{};
 
-  mgr.Register<S, &SBase::val, &S::val>(); // use ENKIWRAP to register bit field
+  mgr.Register<S, &SBase::val, &S::val>();
   {
     const auto ser_res = mgr.Serialize(s1, temp.begin());
     REQUIRE_NOTHROW(ser_res.or_throw());
