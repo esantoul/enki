@@ -1,8 +1,10 @@
-
+#include <array>
 #include <concepts>
 #include <cstdint>
 #include <cstddef>
+#include <numbers>
 #include <type_traits>
+#include <variant>
 #include <vector>
 
 #include "enki/manager.hpp"
@@ -15,13 +17,15 @@ TEST_CASE("Manager copy/move behaves properly", "[manager][regression]")
   struct S
   {
     double d{};
-    uint8_t i : 4{};
+    int8_t i : 5{};
 
     constexpr bool operator==(const S &) const = default;
   };
 #pragma pack(pop)
 
   const S s1{3.14, 0xF};
+  const S s2{std::numbers::e, -2};
+  const S s3{std::numbers::phi, 0x7};
 
   enki::Manager mgr;
 
@@ -35,30 +39,43 @@ TEST_CASE("Manager copy/move behaves properly", "[manager][regression]")
   {
     auto mgr2 = mgr;
 
-    S s2;
+    S sd;
 
-    const auto ser_res = mgr2.Serialize(S{}, std::back_inserter(temp)).or_throw();
+    const auto ser_res = mgr2.Serialize(s2, std::back_inserter(temp)).or_throw();
     REQUIRE_NOTHROW(ser_res.or_throw());
     REQUIRE(ser_res.size() == sizeof(S));
 
-    const auto des_res = mgr2.Deserialize(s2, std::begin(temp)).or_throw();
+    const auto des_res = mgr2.Deserialize(sd, std::begin(temp)).or_throw();
     REQUIRE_NOTHROW(des_res.or_throw());
-    REQUIRE(s2 == s1);
+    REQUIRE(sd == s1);
   }
+
+  std::variant<std::monostate, enki::Manager<>> vmgr{};
 
   {
     auto mgr3 = std::move(mgr);
 
-    S s3;
+    S sd;
 
-    const auto ser_res = mgr3.Serialize(S{}, std::back_inserter(temp)).or_throw();
+    const auto ser_res = mgr3.Serialize(s3, std::back_inserter(temp)).or_throw();
     REQUIRE_NOTHROW(ser_res.or_throw());
     REQUIRE(ser_res.size() == sizeof(S));
 
-    const auto des_res = mgr3.Deserialize(s3, std::begin(temp)).or_throw();
+    const auto des_res = mgr3.Deserialize(sd, std::begin(temp)).or_throw();
     REQUIRE_NOTHROW(des_res.or_throw());
     REQUIRE(des_res.size() == sizeof(S));
-    REQUIRE(s3 == s1);
+    REQUIRE(sd == s1);
+
+    vmgr = std::move(mgr3);
+  }
+
+  {
+    std::array<S, 3> as;
+
+    const auto des_res = std::get<enki::Manager<>>(vmgr).Deserialize(as, std::begin(temp));
+
+    REQUIRE_NOTHROW(des_res.or_throw());
+    REQUIRE(as == std::array{s1, s2, s3});
   }
 
   REQUIRE_THROWS(mgr.Serialize(S{}, std::back_inserter(temp)).or_throw());
