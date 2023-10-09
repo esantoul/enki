@@ -1,0 +1,300 @@
+
+#include <cstddef>
+#include <concepts>
+#include <bit>
+#include <algorithm>
+#include <array>
+#include <span>
+#include <stdexcept>
+#include <ostream>
+
+namespace enki::concepts
+{
+  template <typename T>
+  concept arithmetic_or_enum = std::integral<T> || std::floating_point<T> || std::is_enum_v<T>;
+
+  namespace details
+  {
+    template <typename It>
+    struct iterator_underlying
+    {
+      using value_type = typename std::iterator_traits<It>::value_type;
+    };
+
+    template <typename It>
+      requires requires { typename It::container_type; }
+    struct iterator_underlying<It>
+    {
+      using value_type = typename It::container_type::value_type;
+    };
+
+    template <typename It>
+      requires requires { typename It::enki_value_type; }
+    struct iterator_underlying<It>
+    {
+      using value_type = typename It::enki_value_type;
+    };
+
+    template <typename It>
+      requires requires { typename It::char_type;}
+    struct iterator_underlying<It>
+    {
+      using value_type = typename It::char_type;
+    };
+
+    template <typename It>
+    using iterator_underlying_t = typename iterator_underlying<It>::value_type;
+  }
+
+  template <typename It>
+  concept ByteDataOutputIterator =
+    std::input_or_output_iterator<It> &&
+    (sizeof(details::iterator_underlying_t<It>) == 1) &&
+    requires (It it) { *it = static_cast<details::iterator_underlying_t<It>>(std::byte{}); } &&
+    requires (It it, It it2) { it2 = it; };
+
+  template <typename T>
+  concept byte_like = arithmetic_or_enum<std::remove_cvref_t<T>> && (sizeof(T) == 1) && requires (std::byte b) { static_cast<std::remove_cvref_t<T>>(b); };
+
+  template <typename Cnt>
+  concept spannable_container = requires (Cnt c) { std::span(c); };
+
+  template <typename Cnt>
+  concept byte_container = byte_like<typename Cnt::value_type>;
+
+  template <typename Cnt>
+  concept spannable_byte_like_container = spannable_container<Cnt> && byte_container<Cnt>;
+}
+
+namespace enki
+{
+  namespace details
+  {
+    class BinWriterBase
+    {
+    public:
+      constexpr virtual ~BinWriterBase() = default;
+      constexpr virtual void Write(std::span<const std::byte> bytes) = 0;
+    };
+
+    template <enki::concepts::ByteDataOutputIterator It>
+    class IteratorBinWriter : public BinWriterBase
+    {
+    public:
+      constexpr ~IteratorBinWriter() = default;
+      constexpr IteratorBinWriter(It i)
+        :
+        mIter(i)
+      {
+      }
+
+      constexpr void Write(std::span<const std::byte> bytes) final
+      {
+        using T = concepts::details::iterator_underlying_t<It>;
+        if constexpr (std::same_as<T, std::byte>)
+        {
+          mIter = std::copy(std::begin(bytes), std::end(bytes), mIter);
+        }
+        else
+        {
+          mIter = std::transform(
+            std::begin(bytes),
+            std::end(bytes),
+            mIter,
+            [](std::byte v){
+              return static_cast<concepts::details::iterator_underlying_t<It>>(v);
+            }
+          );
+        }
+      }
+
+    private:
+      It mIter;
+    };
+
+    template <concepts::byte_like T>
+    class SpanBinWriter : public BinWriterBase
+    {
+    public:
+      constexpr ~SpanBinWriter() = default; // mandatory due to a bug in gcc
+      constexpr SpanBinWriter(std::span<T> s)
+        :
+        mSpan(s)
+      {
+      }
+
+      constexpr void Write(std::span<const std::byte> bytes) final
+      {
+        if (mIdx + std::size(bytes) > std::size(mSpan))
+        {
+          throw std::out_of_range("Overflow while serializing into span of [TODO Type T Name]");
+        }
+        if constexpr (std::same_as<T, std::byte>)
+        {
+          std::copy(std::begin(bytes), std::end(bytes), std::data(mSpan) + mIdx);
+        }
+        else
+        {
+          std::transform(
+            std::begin(bytes),
+            std::end(bytes),
+            std::data(mSpan) + mIdx,
+            [](std::byte v){
+              return static_cast<T>(v);
+            }
+          );
+        }
+        mIdx += std::size(bytes);
+      }
+
+    private:
+      std::span<T> mSpan;
+      size_t mIdx = 0;
+    };
+  }
+
+  class BinWriter
+  {
+  public:
+    template <concepts::ByteDataOutputIterator It>
+    constexpr BinWriter(It it)
+      :
+      pSer(new details::IteratorBinWriter(it))
+    {
+    }
+
+    template <concepts::spannable_byte_like_container Cnt>
+    constexpr BinWriter(Cnt& cnt)
+      :
+      pSer(new details::SpanBinWriter(std::span<typename Cnt::value_type>(cnt)))
+    {
+    }
+
+    template <concepts::byte_like T>
+    constexpr BinWriter(std::span<T> s)
+      :
+      pSer(new details::SpanBinWriter(s))
+    {
+    }
+
+    constexpr ~BinWriter()
+    {
+      delete pSer;
+    }
+
+    template <std::integral T>
+    constexpr void Write(const T& v)
+    {
+      auto&& bytes = std::bit_cast<std::array<std::byte, sizeof(T)>>(v);
+      pSer->Write(bytes);
+    }
+
+  private:
+    details::BinWriterBase *pSer;
+  };
+
+
+
+  class JSONWriter
+  {
+  public:
+    JSONWriter(std::ostream& os)
+      :
+      mOs(&os)
+    {
+    }
+
+    template <std::integral T>
+    void Write(const T& v)
+    {
+      if (mComma)
+      {
+        (*mOs) << ",\n";
+      }
+      (*mOs) << mIndent << v;
+      mComma = true;
+    }
+
+    void Write(const std::string& s)
+    {
+      if (mComma)
+      {
+        (*mOs) << ",\n";
+      }
+      (*mOs) << mIndent << R"(")" << s << R"(")";
+      mComma = true;
+    }
+
+    void CollectionStart(size_t)
+    {
+      CollectionStart();
+    }
+
+    void CollectionStart()
+    {
+      if (mComma)
+      {
+        (*mOs) << ",\n";
+      }
+      (*mOs) << mIndent << "[\n";
+      mIndent += "  ";
+      mComma = false;
+    }
+
+    void CollectionStop()
+    {
+      mIndent = mIndent.substr(0, std::max<int>(mIndent.size() - 2, 0));
+      (*mOs) << "\n" << mIndent << "]";
+    }
+
+  private:
+    bool mComma = false;
+    std::ostream* mOs;
+    std::string mIndent;
+  };
+}
+
+#include <iostream>
+#include <vector>
+#include <cstdint>
+#include <iterator>
+#include <unordered_map>
+#include <string_view>
+
+int main()
+{
+  /*
+  std::vector<std::byte> buff(8);
+  enki::BinWriter bw{buff};
+
+  bw.Write('a');
+  bw.Write(-1);
+
+  for (auto el: buff)
+  {
+    std::cout << static_cast<int>(el) << std::endl;
+  }
+  /*/
+  enki::JSONWriter jw(std::cout);
+
+  std::unordered_map<std::string, int> map{
+    {"kitty", 42},
+    {"doggo", -1}
+  };
+
+  jw.Write(42);
+  jw.Write("Hello, world!");
+  jw.CollectionStart(2);
+  for (const auto& [k,v]: map)
+  {
+    jw.CollectionStart(2);
+    jw.Write(k);
+    jw.Write(v);
+    jw.CollectionStop();
+  }
+  jw.CollectionStop();
+
+  //*/
+
+  return 0;
+}
