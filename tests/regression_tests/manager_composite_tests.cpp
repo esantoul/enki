@@ -84,10 +84,10 @@ TEST_CASE("Manager Composite Test (Custom type at bottom of data hierarchy)", "[
   auto mgr = enki::Manager{};
   mgr.Register<TrackInfo, ENKIWRAP(TrackInfo, style), ENKIWRAP(TrackInfo, rating), &TrackInfo::playCount>();
 
-  const auto numBytesResult = mgr.NumBytes(allSongs);
-  REQUIRE_NOTHROW(numBytesResult.or_throw());
+  const auto numBytesSuccess = mgr.NumBytes(allSongs);
+  REQUIRE_NOTHROW(numBytesSuccess.or_throw());
 
-  std::vector<std::byte> temp(numBytesResult.size());
+  std::vector<std::byte> temp(numBytesSuccess.size());
 
   {
     const auto ser_res = mgr.Serialize(allSongs, temp.begin());

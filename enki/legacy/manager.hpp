@@ -37,7 +37,7 @@ namespace enki
     }
 
     template <typename T, concepts::ByteDataOutputIterator It>
-    constexpr Result<It> Serialize(const T &val, It out) const
+    constexpr Success<It> Serialize(const T &val, It out) const
     {
       if constexpr (concepts::BasicSerializable<T>)
       {
@@ -65,7 +65,7 @@ namespace enki
     }
 
     template <typename T, concepts::ByteDataInputIterator It>
-    constexpr Result<It> Deserialize(T &val, It in) const
+    constexpr Success<It> Deserialize(T &val, It in) const
     {
       if constexpr (concepts::BasicSerializable<T>)
       {
@@ -94,7 +94,7 @@ namespace enki
     }
 
     template <typename T>
-    constexpr Result<void> NumBytes(const T &val) const
+    constexpr Success<void> NumBytes(const T &val) const
     {
       if constexpr (concepts::BasicSerializable<T>)
       {
@@ -129,9 +129,9 @@ namespace enki
     class TypeSerDesHandler : public BaseCustomSerDesHandler
     {
     public:
-      constexpr virtual Result<AnyByteOutputIt> Serialize(const Manager *, const T &, AnyByteOutputIt) const = 0;
-      constexpr virtual Result<AnyByteInputIt> Deserialize(const Manager *, T &, AnyByteInputIt) const = 0;
-      constexpr virtual Result<void> NumBytes(const Manager *, const T &) const = 0;
+      constexpr virtual Success<AnyByteOutputIt> Serialize(const Manager *, const T &, AnyByteOutputIt) const = 0;
+      constexpr virtual Success<AnyByteInputIt> Deserialize(const Manager *, T &, AnyByteInputIt) const = 0;
+      constexpr virtual Success<void> NumBytes(const Manager *, const T &) const = 0;
     };
 
     template <typename T, auto ... mem>
@@ -140,20 +140,20 @@ namespace enki
     public:
       constexpr ~SpecializedTypeSerDesHandler() = default;
 
-      constexpr Result<AnyByteOutputIt> Serialize(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const final
+      constexpr Success<AnyByteOutputIt> Serialize(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const final
       {
         static_cast<void>(pMgr); // avoid unused variable warning
-        Result<AnyByteOutputIt> res(static_cast<size_t>(0), out);
+        Success<AnyByteOutputIt> res(static_cast<size_t>(0), out);
         // out underlying iterator is auto updated because out holds a reference to the original output iterator
         // see call to this very method
         static_cast<void>((static_cast<bool>(res.update(Serialize_one<mem>(pMgr, inst, out))) && ...));
         return res;
       }
 
-      constexpr Result<AnyByteInputIt> Deserialize(const Manager *pMgr, T &inst, AnyByteInputIt in) const final
+      constexpr Success<AnyByteInputIt> Deserialize(const Manager *pMgr, T &inst, AnyByteInputIt in) const final
       {
         static_cast<void>(pMgr); // avoid unused variable warning
-        Result<AnyByteInputIt> res(static_cast<size_t>(0), in);
+        Success<AnyByteInputIt> res(static_cast<size_t>(0), in);
         static_cast<void>(([this, pMgr, &res, &in, &inst] {
           auto r = Deserialize_one<mem>(pMgr, inst, in);
           std::advance(in, r.size());
@@ -162,17 +162,17 @@ namespace enki
         return res;
       }
 
-      constexpr Result<void> NumBytes(const Manager *pMgr, const T &inst) const final
+      constexpr Success<void> NumBytes(const Manager *pMgr, const T &inst) const final
       {
         static_cast<void>(pMgr); // avoid unused variable warning
-        Result<void> res{};
+        Success<void> res{};
         static_cast<void>((static_cast<bool>(res.update(NumBytes_one<mem>(pMgr, inst))) && ...));
         return res;
       }
 
     private:
       template <auto onemem>
-      constexpr Result<AnyByteOutputIt> Serialize_one(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
+      constexpr Success<AnyByteOutputIt> Serialize_one(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
       {
         return pMgr->Serialize(inst.*onemem, out);
         // out underlying iterator is auto updated because out holds a reference to the original output iterator
@@ -180,21 +180,21 @@ namespace enki
 
       template <auto onemem>
         requires concepts::proper_member_wrapper<T, decltype(onemem)>
-      constexpr Result<AnyByteOutputIt> Serialize_one(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
+      constexpr Success<AnyByteOutputIt> Serialize_one(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
       {
         return pMgr->Serialize(onemem.getter(inst), out);
         // out underlying iterator is auto updated because out holds a reference to the original output iterator
       }
 
       template <auto onemem>
-      constexpr Result<AnyByteInputIt> Deserialize_one(const Manager *pMgr, T &inst, AnyByteInputIt in) const
+      constexpr Success<AnyByteInputIt> Deserialize_one(const Manager *pMgr, T &inst, AnyByteInputIt in) const
       {
         return pMgr->Deserialize(inst.*onemem, in);
       }
 
       template <auto onemem>
         requires concepts::proper_member_wrapper<T, decltype(onemem)>
-      constexpr Result<AnyByteInputIt> Deserialize_one(const Manager *pMgr, T &inst, AnyByteInputIt in) const
+      constexpr Success<AnyByteInputIt> Deserialize_one(const Manager *pMgr, T &inst, AnyByteInputIt in) const
       {
         typename decltype(onemem)::value_type temp{};
         auto r = pMgr->Deserialize(temp, in);
@@ -203,14 +203,14 @@ namespace enki
       }
 
       template <auto onemem>
-      constexpr Result<void> NumBytes_one(const Manager *pMgr, const T &inst) const
+      constexpr Success<void> NumBytes_one(const Manager *pMgr, const T &inst) const
       {
         return pMgr->NumBytes(inst.*onemem);
       }
 
       template <auto onemem>
         requires concepts::proper_member_wrapper<T, decltype(onemem)>
-      constexpr Result<void> NumBytes_one(const Manager *pMgr, const T &inst) const
+      constexpr Success<void> NumBytes_one(const Manager *pMgr, const T &inst) const
       {
         return pMgr->NumBytes(onemem.getter(inst));
       }

@@ -28,7 +28,7 @@ namespace
     constexpr double get_double() const { return d; }
 
   private:
-    friend struct SerialisationExpectedResult;
+    friend struct SerialisationExpectedSuccess;
 
     double d{};
     int i{};
@@ -39,7 +39,7 @@ namespace
     static constexpr auto members = std::make_tuple(&MyClass::i, &MyClass::d);
   };
 
-  struct SerialisationExpectedResult
+  struct SerialisationExpectedSuccess
   {
     std::array<std::byte, sizeof(decltype(MyClass::i))> i;  // MyClass::i should be serialized first
     std::array<std::byte, sizeof(decltype(MyClass::d))> d;  // MyClass::d should be serialized second
@@ -71,7 +71,7 @@ TEST_CASE("Base Engine Custom Type SerDes", "[manager][regression]")
 
   // order of registration should be preserved
   {
-    const auto &serializedLayout = std::bit_cast<SerialisationExpectedResult>(temp);
+    const auto &serializedLayout = std::bit_cast<SerialisationExpectedSuccess>(temp);
     REQUIRE(c1.get_int() == std::bit_cast<int>(serializedLayout.i));
     REQUIRE(c1.get_double() == std::bit_cast<double>(serializedLayout.d));
   }

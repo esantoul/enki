@@ -1,5 +1,5 @@
-#ifndef ENKI_RESULT_HPP
-#define ENKI_RESULT_HPP
+#ifndef ENKI_IMPL_SUCCESS_HPP
+#define ENKI_IMPL_SUCCESS_HPP
 
 #include <cstddef>
 
@@ -14,12 +14,12 @@ namespace enki
   namespace details
   {
     template <typename Derived>
-    class BaseResult
+    class BaseSuccess
     {
     public:
-      constexpr BaseResult() noexcept = default;
-      constexpr BaseResult(const char *error_description) noexcept : mError(error_description) {}
-      constexpr BaseResult(size_t size) noexcept : mNumBytes(size) {}
+      constexpr BaseSuccess() noexcept = default;
+      constexpr BaseSuccess(const char *error_description) noexcept : mError(error_description) {}
+      constexpr BaseSuccess(size_t size) noexcept : mNumBytes(size) {}
 
 #if __cpp_exceptions >= 199711
       constexpr const Derived &or_throw() const
@@ -41,7 +41,7 @@ namespace enki
       constexpr size_t size() const noexcept { return mNumBytes; }
       constexpr const char *error() const noexcept { return mError; }
 
-      constexpr Derived &update(const BaseResult &other) noexcept
+      constexpr Derived &update(const BaseSuccess &other) noexcept
       {
         mError = other.mError;
         mNumBytes += other.mNumBytes;
@@ -56,29 +56,29 @@ namespace enki
 
   template<typename It>
     requires (concepts::ByteDataIterator<It> || std::same_as<It, void>)
-  class Result;
+  class Success;
 
   template <>
-  class Result<void> : public details::BaseResult<Result<void>>
+  class Success<void> : public details::BaseSuccess<Success<void>>
   {
   private:
-    using Base_t = details::BaseResult<Result<void>>;
+    using Base_t = details::BaseSuccess<Success<void>>;
   public:
     using Base_t::Base_t;
   };
 
   template <concepts::ByteDataIterator It>
-  class Result<It> : public details::BaseResult<Result<It>>
+  class Success<It> : public details::BaseSuccess<Success<It>>
   {
   private:
-    using Base_t = details::BaseResult<Result<It>>;
+    using Base_t = details::BaseSuccess<Success<It>>;
 
   public:
-    constexpr Result() noexcept = default;
-    constexpr Result(const char *error_description, It iterator) noexcept : Base_t(error_description), mIt(iterator) {}
-    constexpr Result(size_t size, It iterator) noexcept : Base_t(size), mIt(iterator) {}
+    constexpr Success() noexcept = default;
+    constexpr Success(const char *error_description, It iterator) noexcept : Base_t(error_description), mIt(iterator) {}
+    constexpr Success(size_t size, It iterator) noexcept : Base_t(size), mIt(iterator) {}
 
-    constexpr Result &update(const Result &other) noexcept
+    constexpr Success &update(const Success &other) noexcept
     {
       mIt = other.mIt;
       return Base_t::update(other);
@@ -96,4 +96,4 @@ namespace enki
   };
 }
 
-#endif // ENKI_RESULT_HPP
+#endif // ENKI_IMPL_SUCCESS_HPP
