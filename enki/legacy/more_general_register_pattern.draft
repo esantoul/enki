@@ -1,0 +1,162 @@
+
+#include <concepts>
+#include <cstddef>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
+struct WrapperBase {};
+
+template <typename T, auto getter_fun, auto setter_fun>
+struct MemberWrapper : WrapperBase
+{
+public:
+  using class_type = T;
+  using value_type = typename std::invoke_result_t<decltype(getter_fun), const T&>;
+
+  static constexpr value_type getter(const T& inst) { return getter_fun(inst); }
+  static constexpr void setter(T& inst, const value_type& val) { setter_fun(inst, val); }
+};
+
+#define ENKIWRAP(T, m)                                \
+  MemberWrapper<T,                                    \
+                [](const T& inst) { return inst.m; }, \
+                [](T& inst, auto& val) { inst.m = val; }>
+
+#define ENKIREG(T, m) ENKIWRAP(T, m){}
+
+
+template <typename T, typename MW>
+concept proper_member_wrapper =
+  std::derived_from<MW, WrapperBase> &&
+  std::same_as<typename MW::class_type, T> &&
+  requires { typename MW::value_type; MW::getter; MW::setter; };
+
+template <typename T, size_t ... idx>
+constexpr bool is_tuple_of_member_wrappers(std::index_sequence<idx...>)
+{
+  return (proper_member_wrapper<T, std::tuple_element_t<idx, typename T::EnkiSerial::members>> && ...);
+}
+
+template <typename T>
+concept custom_static_serializable = requires (T inst)
+{
+  typename T::EnkiSerial::members;
+  std::tuple_size<typename T::EnkiSerial::members>::value;
+} &&
+  (std::tuple_size_v<typename T::EnkiSerial::members> >= 1) &&
+  is_tuple_of_member_wrappers<T>(std::make_index_sequence<std::tuple_size_v<typename T::EnkiSerial::members>>());
+
+template <auto p>
+struct member_pointer : std::false_type {};
+
+template <typename T, typename M, M T::*p>
+struct member_pointer<p> : std::true_type
+{
+  using class_type = T;
+  using value_type = M;
+};
+
+template <typename T, auto p>
+concept class_member =
+  proper_member_wrapper<T, decltype(p)> ||
+  (member_pointer<p>::value &&
+  std::same_as<typename member_pointer<p>::class_type, T>);
+
+/////////////////////////////////
+
+
+class S
+{
+public:
+  constexpr S(int ival, float fval, unsigned int bfval)
+    :
+    i(ival),
+    f(fval),
+    bf(bfval)
+  {
+  }
+
+  struct EnkiSerial;
+
+private:
+  int i{};
+  float f{};
+  unsigned int bf : 8{};
+
+  friend struct T;
+  friend int main();
+};
+
+struct S::EnkiSerial
+{
+  using members =
+    std::tuple< ENKIWRAP(S, i),
+                ENKIWRAP(S, bf)>;
+};
+
+#include <iostream>
+
+template <size_t i, typename T>
+constexpr void print_one(const T& val)
+{
+  std::cout << std::tuple_element_t<i, typename T::EnkiSerial::members>::getter(val) << std::endl;
+}
+
+template <typename T, size_t ... idx>
+constexpr void print_all_impl(const T& val, std::index_sequence<idx...>)
+{
+  (print_one<idx>(val), ...);
+}
+
+template <typename T>
+constexpr void print_all(const T& val)
+{
+  print_all_impl(val, std::make_index_sequence<std::tuple_size_v<typename T::EnkiSerial::members>>());
+}
+
+struct T
+{
+  int i;
+
+  struct EnkiSerial;
+};
+
+struct T::EnkiSerial
+{
+  using members = std::tuple<ENKIWRAP(S, i)>;
+};
+
+template <typename T, auto mem>
+constexpr void print_one_selected(const T& inst)
+{
+  std::cout << inst.*mem << std::endl;
+}
+
+template <typename T, auto mem>
+  requires proper_member_wrapper<T, decltype(mem)>
+constexpr void print_one_selected(const T& inst)
+{
+  std::cout << mem.getter(inst) << std::endl;
+}
+
+template <typename T, auto ... mem>
+  requires (class_member<T, mem> && ...)
+constexpr void print_selected(const T& inst)
+{
+  (print_one_selected<T, mem>(inst), ...);
+}
+
+
+int main()
+{
+  S s{42, 3.14f, 256+69};
+
+  print_all(s);
+
+  std::cout << std::endl;
+
+  print_selected<S, ENKIREG(S, bf), &S::f>(s);
+
+  return class_member<T, ENKIREG(T, i)>;
+}

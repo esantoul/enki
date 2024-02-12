@@ -4,7 +4,7 @@
 #include <bit>
 #include <tuple>
 
-#include "enki/base_engine.hpp"
+#include "enki/legacy/base_engine.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -18,8 +18,7 @@ namespace
       :
       d(dd),
       i(ii)
-    {
-    }
+    {}
 
     constexpr bool operator==(const MyClass &) const = default;
 

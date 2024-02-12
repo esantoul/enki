@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <array>
 
-#include "enki/base_engine.hpp"
+#include "enki/legacy/base_engine.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 

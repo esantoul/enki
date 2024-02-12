@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "enki/manager.hpp"
+#include "enki/legacy/manager.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 

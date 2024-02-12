@@ -1,7 +1,7 @@
 #include <cstddef>
 #include <array>
 
-#include "enki/base_engine.hpp"
+#include "enki/legacy/base_engine.hpp"
 
 enum class MyEnum : char
 {

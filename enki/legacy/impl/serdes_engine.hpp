@@ -11,9 +11,9 @@
 #include <type_traits>
 #include <utility>
 
-#include "enki/impl/concepts.hpp"
-#include "enki/impl/result.hpp"
-#include "enki/impl/utilities.hpp"
+#include "enki/legacy/impl/concepts.hpp"
+#include "enki/legacy/impl/result.hpp"
+#include "enki/legacy/impl/utilities.hpp"
 
 namespace enki
 {

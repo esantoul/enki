@@ -3,7 +3,7 @@
 #include <array>
 #include <bit>
 
-#include "enki/manager.hpp"
+#include "enki/legacy/manager.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
