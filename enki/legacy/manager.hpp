@@ -6,11 +6,11 @@
 #include <unordered_map>
 #include <iterator>
 
-#include "enki/legacy/impl/type_info.hpp"
-#include "enki/legacy/impl/concepts.hpp"
-#include "enki/legacy/impl/cstr.hpp"
-#include "enki/legacy/impl/serdes_engine.hpp"
-#include "enki/legacy/impl/any_byte_iterator.hpp"
+#include "enki/impl/type_info.hpp"
+#include "enki/impl/concepts.hpp"
+#include "enki/impl/cstr.hpp"
+#include "enki/impl/serdes_engine.hpp"
+#include "enki/impl/any_byte_iterator.hpp"
 
 namespace enki
 {

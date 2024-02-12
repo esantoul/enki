@@ -5,7 +5,7 @@
 #include <memory>
 #include <optional>
 
-#include "enki/legacy/impl/concepts.hpp"
+#include "enki/impl/concepts.hpp"
 
 namespace enki
 {
@@ -34,8 +34,7 @@ namespace enki
       constexpr SpecializedByteOutputIt(It it)
         :
         mIt(it)
-      {
-      }
+      {}
 
       constexpr SpecializedByteOutputIt &operator*() final { return *this; }
       constexpr SpecializedByteOutputIt &operator=(std::byte val) final { *mIt = static_cast<concepts::details::iterator_underlying_t<It>>(val); return *this; }
@@ -54,8 +53,7 @@ namespace enki
       constexpr RefByteOutputIt(It &it)
         :
         pIt(&it)
-      {
-      }
+      {}
 
       constexpr RefByteOutputIt &operator*() final { return *this; }
       constexpr RefByteOutputIt &operator=(std::byte val) final { **pIt = static_cast<concepts::details::iterator_underlying_t<It>>(val); return *this; }
@@ -96,8 +94,7 @@ namespace enki
     constexpr AnyByteOutputIt(const AnyByteOutputIt &other)
       :
       pIt(other.pIt->clone())
-    {
-    }
+    {}
 
     constexpr AnyByteOutputIt &operator=(const AnyByteOutputIt &other)
     {
@@ -144,8 +141,7 @@ namespace enki
       constexpr SpecializedByteInputIt(It it)
         :
         mIt(it)
-      {
-      }
+      {}
 
       constexpr const std::byte &operator*() const final
       {
@@ -182,14 +178,12 @@ namespace enki
     constexpr AnyByteInputIt(It it)
       :
       pIt(new details::SpecializedByteInputIt<It>(it))
-    {
-    }
+    {}
 
     constexpr AnyByteInputIt(const AnyByteInputIt &other)
       :
       pIt(other.pIt->clone())
-    {
-    }
+    {}
 
     constexpr AnyByteInputIt &operator=(const AnyByteInputIt &other)
     {

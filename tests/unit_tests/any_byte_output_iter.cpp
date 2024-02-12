@@ -6,7 +6,7 @@
 #include <vector>
 #include <deque>
 
-#include "enki/legacy/impl/any_byte_iterator.hpp"
+#include "enki/impl/any_byte_iterator.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 

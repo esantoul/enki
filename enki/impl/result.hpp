@@ -7,7 +7,7 @@
 #include <stdexcept>
 #endif
 
-#include "enki/legacy/impl/concepts.hpp"
+#include "enki/impl/concepts.hpp"
 
 namespace enki
 {

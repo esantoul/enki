@@ -1,7 +1,7 @@
 #ifndef BASE_ENGINE_HPP
 #define BASE_ENGINE_HPP
 
-#include "enki/legacy/impl/serdes_engine.hpp"
+#include "enki/impl/serdes_engine.hpp"
 
 namespace enki
 {

@@ -1,7 +1,7 @@
 #ifndef ENKI_UTILITIES_HPP
 #define ENKI_UTILITIES_HPP
 
-#include "enki/legacy/impl/concepts.hpp"
+#include "enki/impl/concepts.hpp"
 
 namespace enki
 {
