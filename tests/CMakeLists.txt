@@ -11,7 +11,7 @@ FetchContent_MakeAvailable(Catch2)
 include(CTest)
 # enable_testing()
 
-set(ENKI_REGRESSION_TESTS_SOURCES
+set(ENKI_TESTS_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_arithmetic_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_array_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_composite_tests.cpp
@@ -28,11 +28,11 @@ set(ENKI_REGRESSION_TESTS_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/any_byte_output_iter.cpp
 )
 
-add_executable(enki_regression_tests ${ENKI_REGRESSION_TESTS_SOURCES})
+add_executable(enki_tests ${ENKI_TESTS_SOURCES})
 
-target_include_directories(enki_regression_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(enki_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_compile_options(enki_regression_tests PRIVATE
+target_compile_options(enki_tests PRIVATE
   -Wall
   -Wextra
   -Wshadow
@@ -50,11 +50,11 @@ target_compile_options(enki_regression_tests PRIVATE
   -fsanitize=address
 )
 
-target_link_options(enki_regression_tests PRIVATE
+target_link_options(enki_tests PRIVATE
   -fsanitize=address
 )
 
-target_link_libraries(enki_regression_tests PRIVATE
+target_link_libraries(enki_tests PRIVATE
   enki
   Catch2::Catch2WithMain
 )
@@ -63,4 +63,7 @@ list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 
 include(CTest)
 include(Catch)
-catch_discover_tests(enki_regression_tests)
+catch_discover_tests(enki_tests)
+
+add_custom_target(enki_tests_run ALL ctest --output-on-failure)
+add_dependencies(enki_tests_run enki_tests)

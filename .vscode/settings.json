@@ -79,23 +79,24 @@
   "editor.formatOnSave": true,
   "cmake.configureOnOpen": false,
   "CppHelper.HeaderGuardPattern": "{FILE}_HPP",
-  "C_Cpp.formatting": "vcFormat",
   "editor.detectIndentation": false,
   "editor.tabSize": 2,
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
-  "C_Cpp.vcFormat.indent.gotoLabels": "oneLeft",
+  "C_Cpp.formatting": "vcFormat",
+  "C_Cpp.vcFormat.indent.gotoLabels": "leftmostColumn",
+  "C_Cpp.vcFormat.indent.lambdaBracesWhenParameter": false,
   "C_Cpp.vcFormat.newLine.beforeOpenBrace.block": "newLine",
   "C_Cpp.vcFormat.newLine.beforeOpenBrace.function": "newLine",
   "C_Cpp.vcFormat.newLine.beforeOpenBrace.lambda": "sameLine",
   "C_Cpp.vcFormat.newLine.beforeOpenBrace.namespace": "newLine",
   "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "newLine",
+  "C_Cpp.vcFormat.newLine.closeBraceSameLine.emptyFunction": true,
   "C_Cpp.vcFormat.space.pointerReferenceAlignment": "right",
   "C_Cpp.vcFormat.space.preserveInInitializerList": false,
   "C_Cpp.vcFormat.space.withinInitializerListBraces": false,
-  "editor.defaultFormatter": "ms-vscode.cpptools",
-  "C_Cpp.vcFormat.indent.braces": false,
-  "C_Cpp.vcFormat.indent.lambdaBracesWhenParameter": false,
-  "C_Cpp.vcFormat.indent.preserveComments": true,
-  "cmake.configureOnEdit": false
+  "cmake.configureOnEdit": false,
+  "cmake.configureSettings": {
+    "ENKI_ENABLE_TESTS": "ON"
+  }
 }
