@@ -7,14 +7,17 @@
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/success.hpp"
 
-template <typename T, typename Reader>
-concept immediately_readable = requires (Reader r, T & v)
-{
-  { r.read(v) } -> std::same_as<enki::Success<void>>;
-};
-
 namespace enki
 {
+  namespace details
+  {
+    template <typename T, typename Reader>
+    concept immediately_readable = requires (Reader r, T & v)
+    {
+      { r.read(v) } -> std::same_as<enki::Success<void>>;
+    };
+  } // namespace details
+
   template <typename Reader, typename T>
   Success<void> deserialize(T &value, Reader &r)
   {
@@ -23,7 +26,7 @@ namespace enki
     // If the writer has a specialized `write` method
     // able to handle a value of type `T` it will be
     // used in priority
-    if constexpr (immediately_readable<T, Reader>)
+    if constexpr (details::immediately_readable<T, Reader>)
     {
       return r.read(value);
     }

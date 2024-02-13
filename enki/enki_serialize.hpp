@@ -1,10 +1,10 @@
 #ifndef ENKI_ENKI_SERIALIZE_HPP
 #define ENKI_ENKI_SERIALIZE_HPP
 
-#include "success.hpp"
-#include "concepts.hpp"
-
 #include <algorithm>
+
+#include "enki/impl/concepts.hpp"
+#include "enki/impl/success.hpp"
 
 namespace enki
 {
@@ -15,7 +15,7 @@ namespace enki
     {
       { w.write(v) } -> std::same_as<enki::Success<void>>;
     };
-  }
+  } // namespace details
 
   template <typename Writer, typename T>
   Success<void> serialize(const T &value, Writer &w)
