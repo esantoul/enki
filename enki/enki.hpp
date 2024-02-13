@@ -2,10 +2,7 @@
 #define ENKI_ENKI_HPP
 
 #include "enki/enki_serialize.hpp"
-
-namespace enki
-{
-
-};
+#include "enki/bin_writer.hpp"
+#include "enki/json_writer.hpp"
 
 #endif // ENKI_ENKI_HPP
