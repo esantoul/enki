@@ -1,11 +1,11 @@
 #ifndef ENKI_BIN_WRITER_HPP
 #define ENKI_BIN_WRITER_HPP
 
-#include "enki/impl/concepts.hpp"
-#include "enki/impl/success.hpp"
-
 #include <bit>
 #include <vector>
+
+#include "enki/impl/concepts.hpp"
+#include "enki/impl/success.hpp"
 
 namespace enki
 {
@@ -21,7 +21,7 @@ namespace enki
       return {};
     }
 
-    constexpr Success<void> arrayBegin(size_t) const
+    constexpr Success<void> arrayBegin() const
     {
       return {};
     }

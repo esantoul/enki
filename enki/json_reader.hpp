@@ -1,5 +1,5 @@
-#ifndef ENKI_JSON_WRITER_HPP
-#define ENKI_JSON_WRITER_HPP
+#ifndef ENKI_JSON_READER_HPP
+#define ENKI_JSON_READER_HPP
 
 #include <iomanip>
 #include <sstream>
@@ -11,72 +11,80 @@
 namespace enki
 {
   template <typename SizeType = uint32_t>
-  class JSONWriter
+  class JSONReader
   {
   public:
+    JSONReader(std::string_view sv)
+    {
+      mStream << sv;
+    }
+
     template <concepts::arithmetic_or_enum T>
-    constexpr Success<void> write(const T &v)
+    constexpr Success<void> read(T &v)
     {
       if constexpr (sizeof(T) == 1)
       {
-        mStream << static_cast<int32_t>(v);
+        int32_t val{};
+        mStream >> val;
+        v = static_cast<T>(val);
       }
       else
       {
-        mStream << static_cast<std::underlying_type_t<T>>(v);
+        mStream >> v;
       }
       return {};
     }
 
-    constexpr Success<void> write(const std::string &s)
+    constexpr Success<void> read(std::string &str)
     {
-      mStream << std::quoted(s);
+      mStream >> std::quoted(str);
       return {};
     }
 
     constexpr Success<void> arrayBegin()
     {
-      mStream << "[";
+      char junk{};
+      mStream >> junk;
       return {};
     }
 
     constexpr Success<void> arrayEnd()
     {
-      mStream << "]";
+      char junk{};
+      mStream >> junk;
       return {};
     }
 
     constexpr Success<void> nextArrayElement()
     {
-      mStream << ", ";
+      char junk{};
+      mStream >> junk;
       return {};
     }
 
-    constexpr Success<void> rangeBegin(size_t numElements)
+    constexpr Success<void> rangeBegin(size_t &numElements)
     {
-      mStream << "[" << numElements;
+      char junk{};
+      mStream >> junk >> numElements;
       if (numElements > 0)
       {
-        mStream << ", ";
+        mStream >> junk;
       }
       return {};
     }
 
     constexpr Success<void> rangeEnd()
     {
-      mStream << "]";
+      char junk{};
+      mStream >> junk;
       return {};
     }
 
     constexpr Success<void> nextRangeElement()
     {
-      mStream << ", ";
+      char junk{};
+      mStream >> junk;
       return {};
-    }
-
-    const std::stringstream &data() const
-    {
-      return mStream;
     }
 
   private:
@@ -84,4 +92,4 @@ namespace enki
   };
 } // namespace enki
 
-#endif // ENKI_JSON_WRITER_HPP
+#endif // ENKI_JSON_READER_HPP
