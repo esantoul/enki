@@ -156,7 +156,7 @@ namespace enki
 
     private:
       constexpr SpecializedByteInputIt *clone() final { return new SpecializedByteInputIt(mIt); }
-      constexpr const void *address() const { return &*mIt; }
+      constexpr const void *address() const final { return &*mIt; }
 
       It mIt;
       mutable std::optional<std::byte> mCurrentValue{};

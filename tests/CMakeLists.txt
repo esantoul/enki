@@ -4,14 +4,17 @@ Include(FetchContent)
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.4.0
+  GIT_TAG        v3.5.2
 )
 FetchContent_MakeAvailable(Catch2)
 
-include(CTest)
-# enable_testing()
+add_executable(enki_tests)
 
-set(ENKI_TESTS_SOURCES
+set_target_properties(enki_tests PROPERTIES
+  ${ENKI_COMMON_PROPERTIES}
+)
+
+target_sources(enki_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_arithmetic_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_array_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_composite_tests.cpp
@@ -28,24 +31,10 @@ set(ENKI_TESTS_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/any_byte_output_iter.cpp
 )
 
-add_executable(enki_tests ${ENKI_TESTS_SOURCES})
-
 target_include_directories(enki_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_compile_options(enki_tests PRIVATE
-  -Wall
-  -Wextra
-  -Wshadow
-  -Wnon-virtual-dtor
-  -pedantic
-
-  -Wold-style-cast
-  -Wcast-align
-  -Wunused
-  -Woverloaded-virtual
-  -Wnull-dereference
-
-  # -Weffc++
+  ${ENKI_COMMON_COMPILE_OPTIONS}
 
   -fsanitize=address
 )
