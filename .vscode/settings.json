@@ -83,20 +83,14 @@
   "editor.tabSize": 2,
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
-  "C_Cpp.formatting": "vcFormat",
-  "C_Cpp.vcFormat.indent.gotoLabels": "leftmostColumn",
-  "C_Cpp.vcFormat.indent.lambdaBracesWhenParameter": false,
-  "C_Cpp.vcFormat.newLine.beforeOpenBrace.block": "newLine",
-  "C_Cpp.vcFormat.newLine.beforeOpenBrace.function": "newLine",
-  "C_Cpp.vcFormat.newLine.beforeOpenBrace.lambda": "sameLine",
-  "C_Cpp.vcFormat.newLine.beforeOpenBrace.namespace": "newLine",
-  "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "newLine",
-  "C_Cpp.vcFormat.newLine.closeBraceSameLine.emptyFunction": true,
-  "C_Cpp.vcFormat.space.pointerReferenceAlignment": "right",
-  "C_Cpp.vcFormat.space.preserveInInitializerList": false,
-  "C_Cpp.vcFormat.space.withinInitializerListBraces": false,
+  "C_Cpp.intelliSenseEngine": "disabled",
   "cmake.configureOnEdit": false,
   "cmake.configureSettings": {
     "ENKI_ENABLE_TESTS": "ON"
-  }
+  },
+  "clangd.arguments": [
+    "--query-driver=**",
+    "--header-insertion=never"
+  ],
+  "clangd.path": "clangd-18", // Adjust the path as necessary
 }
