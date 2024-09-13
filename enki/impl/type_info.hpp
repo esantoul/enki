@@ -1,8 +1,8 @@
 #ifndef ENKI_TYPE_INFO_HPP
 #define ENKI_TYPE_INFO_HPP
 
-#include <string_view>
 #include <cstddef>
+#include <string_view>
 
 namespace enki
 {
@@ -10,19 +10,24 @@ namespace enki
   class Type
   {
     template <typename T>
-    static constexpr bool get_idx_impl() { return false; }
+    static constexpr bool getIdxImpl()
+    {
+      return false;
+    }
 
   public:
-    using index_t = bool (*)();
+    using Index = bool (*)();
 
     template <typename T>
-    static constexpr index_t get_index()
+    static constexpr Index getIndex()
     {
-      return &get_idx_impl<T>;
+      return &getIdxImpl<T>;
     }
   };
 
-  static_assert(Type::get_index<char>() != Type::get_index<unsigned char>(), "Your compiler does not support this library unique type signature feature");
+  static_assert(
+    Type::getIndex<char>() != Type::getIndex<unsigned char>(),
+    "Your compiler does not support this library unique type signature feature");
 
 #elif defined(__GNUC__) || defined(__GNUG__)
 
@@ -38,14 +43,16 @@ namespace enki
     }
   };
 
-  static_assert(Type::get_index<char>() != Type::get_index<unsigned char>(), "Your compiler does not support this library unique type signature feature");
+  static_assert(
+    Type::get_index<char>() != Type::get_index<unsigned char>(),
+    "Your compiler does not support this library unique type signature feature");
 
 #else
   static_assert(false, "Your compiler does not support this library unique type signature feature");
 #endif
 
   template <typename T>
-  constexpr std::string_view full_function_name()
+  constexpr std::string_view getFullFunctionName()
   {
 #if defined(__clang__) || defined(__GNUC__)
     return __PRETTY_FUNCTION__;
@@ -57,23 +64,23 @@ namespace enki
   }
 
   // Outside of the template so its computed once
-  struct type_name_info
+  struct TypeNameInfo
   {
-    static constexpr std::string_view sentinel = full_function_name<double>();
-    static constexpr ptrdiff_t type_name_start = sentinel.find("double");
-    static constexpr ptrdiff_t suffix_length = sentinel.size() - type_name_start - 6;
+    static constexpr std::string_view kSentinel = getFullFunctionName<double>();
+    static constexpr ptrdiff_t kTypeNameStart = kSentinel.find("double");
+    static constexpr ptrdiff_t kSuffixLength = kSentinel.size() - kTypeNameStart - 6;
   };
 
   template <typename T>
-  constexpr std::string_view get_type_name()
+  constexpr std::string_view getTypeName()
   {
-    constexpr auto sentinel = full_function_name<T>();
+    constexpr auto kSentinel = getFullFunctionName<T>();
 
-    const auto start = type_name_info::type_name_start;
-    const auto size = sentinel.size() - start - type_name_info::suffix_length;
+    const auto start = TypeNameInfo::kTypeNameStart;
+    const auto size = kSentinel.size() - start - TypeNameInfo::kSuffixLength;
 
-    return sentinel.substr(start, size);
+    return kSentinel.substr(start, size);
   }
-}
+} // namespace enki
 
 #endif // ENKI_TYPE_INFO_HPP

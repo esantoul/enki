@@ -25,13 +25,13 @@ namespace enki
       requires(concepts::class_member<T, mem> && ...)
     constexpr void registerType()
     {
-      mConverters[Type::get_index<T>()] = &kSpecializedHandler<T, mem...>;
+      mConverters[Type::getIndex<T>()] = &kSpecializedHandler<T, mem...>;
     }
 
     template <typename T>
     constexpr void unregisterType()
     {
-      mConverters.erase(Type::get_index<T>());
+      mConverters.erase(Type::getIndex<T>());
     }
 
     template <typename T, concepts::ByteDataOutputIterator It>
@@ -43,7 +43,7 @@ namespace enki
       }
       else
       {
-        if (auto it = mConverters.find(Type::get_index<T>()); it != mConverters.end())
+        if (auto it = mConverters.find(Type::getIndex<T>()); it != mConverters.end())
         {
           auto res = static_cast<const TypeSerDesHandlerInterface<T> *>(it->second)
                        ->serialize(this, val, AnyByteOutputIt::ref(out));
@@ -72,7 +72,7 @@ namespace enki
       }
       else
       {
-        if (auto it = mConverters.find(Type::get_index<T>()); it != mConverters.end())
+        if (auto it = mConverters.find(Type::getIndex<T>()); it != mConverters.end())
         {
           auto res = static_cast<const TypeSerDesHandlerInterface<T> *>(it->second)
                        ->deserialize(this, val, in);
@@ -102,7 +102,7 @@ namespace enki
       }
       else
       {
-        if (auto it = mConverters.find(Type::get_index<T>()); it != mConverters.end())
+        if (auto it = mConverters.find(Type::getIndex<T>()); it != mConverters.end())
         {
           return static_cast<const TypeSerDesHandlerInterface<T> *>(it->second)
             ->numBytes(this, val);
@@ -117,10 +117,10 @@ namespace enki
   private:
     template <typename T>
     static constexpr auto kSerialError =
-      cStrConcat<"Type ", get_type_name<T>(), " has not been registered for serialization">();
+      cStrConcat<"Type ", getTypeName<T>(), " has not been registered for serialization">();
     template <typename T>
     static constexpr auto kDeserialError =
-      cStrConcat<"Type ", get_type_name<T>(), " has not been registered for deserialization">();
+      cStrConcat<"Type ", getTypeName<T>(), " has not been registered for deserialization">();
 
     class BaseCustomSerDesHandler
     {
@@ -233,7 +233,7 @@ namespace enki
     template <typename T, auto... memptrs>
     static constexpr auto kSpecializedHandler = SpecializedTypeSerDesHandler<T, memptrs...>{};
 
-    Container<Type::index_t, const BaseCustomSerDesHandler *> mConverters{};
+    Container<Type::Index, const BaseCustomSerDesHandler *> mConverters{};
   };
 } // namespace enki
 

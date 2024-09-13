@@ -18,28 +18,51 @@ namespace enki
     {
     public:
       constexpr BaseSuccess() noexcept = default;
-      constexpr BaseSuccess(const char *error_description) noexcept : mError(error_description) {}
-      constexpr BaseSuccess(size_t size) noexcept : mNumBytes(size) {}
+
+      constexpr BaseSuccess(const char *errorDescription) noexcept :
+        mError(errorDescription)
+      {
+      }
+
+      constexpr BaseSuccess(size_t size) noexcept :
+        mNumBytes(size)
+      {
+      }
 
 #if __cpp_exceptions >= 199711
       constexpr const Derived &or_throw() const
       {
         if (mError) [[unlikely]]
+        {
           throw std::invalid_argument(mError);
-          return static_cast<const Derived &>(*this);
+        }
+        return static_cast<const Derived &>(*this);
       }
 
       constexpr Derived &or_throw()
       {
         if (mError) [[unlikely]]
+        {
           throw std::invalid_argument(mError);
-          return static_cast<Derived &>(*this);
+        }
+        return static_cast<Derived &>(*this);
       }
 #endif
 
-      constexpr explicit operator bool() const noexcept { return mError == nullptr; }
-      constexpr size_t size() const noexcept { return mNumBytes; }
-      constexpr const char *error() const noexcept { return mError; }
+      constexpr explicit operator bool() const noexcept
+      {
+        return mError == nullptr;
+      }
+
+      constexpr size_t size() const noexcept
+      {
+        return mNumBytes;
+      }
+
+      constexpr const char *error() const noexcept
+      {
+        return mError;
+      }
 
       constexpr Derived &update(const BaseSuccess &other) noexcept
       {
@@ -52,10 +75,10 @@ namespace enki
       const char *mError = nullptr;
       size_t mNumBytes = 0;
     };
-  }
+  } // namespace details
 
-  template<typename It>
-    requires (concepts::ByteDataIterator<It> || std::same_as<It, void>)
+  template <typename It>
+    requires(concepts::ByteDataIterator<It> || std::same_as<It, void>)
   class Success;
 
   template <>
@@ -63,6 +86,7 @@ namespace enki
   {
   private:
     using Base_t = details::BaseSuccess<Success<void>>;
+
   public:
     using Base_t::Base_t;
   };
@@ -75,8 +99,18 @@ namespace enki
 
   public:
     constexpr Success() noexcept = default;
-    constexpr Success(const char *error_description, It iterator) noexcept : Base_t(error_description), mIt(iterator) {}
-    constexpr Success(size_t size, It iterator) noexcept : Base_t(size), mIt(iterator) {}
+
+    constexpr Success(const char *error_description, It iterator) noexcept :
+      Base_t(error_description),
+      mIt(iterator)
+    {
+    }
+
+    constexpr Success(size_t size, It iterator) noexcept :
+      Base_t(size),
+      mIt(iterator)
+    {
+    }
 
     constexpr Success &update(const Success &other) noexcept
     {
@@ -94,6 +128,6 @@ namespace enki
 
     It mIt{};
   };
-}
+} // namespace enki
 
 #endif // ENKI_IMPL_SUCCESS_HPP
