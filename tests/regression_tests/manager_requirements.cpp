@@ -1,26 +1,28 @@
 #include <array>
 #include <concepts>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <numbers>
 #include <type_traits>
 #include <variant>
 #include <vector>
 
-#include "enki/legacy/manager.hpp"
-
 #include "catch2/catch_test_macros.hpp"
+
+#include "enki/legacy/manager.hpp"
 
 TEST_CASE("Manager copy/move behaves properly", "[manager][regression]")
 {
 #pragma pack(push, 1)
+
   struct S
   {
     double d{};
-    int8_t i : 5{};
+    int8_t i : 5 {};
 
     constexpr bool operator==(const S &) const = default;
   };
+
 #pragma pack(pop)
 
   const S s1{3.14, 0xF};
@@ -31,22 +33,22 @@ TEST_CASE("Manager copy/move behaves properly", "[manager][regression]")
 
   std::vector<std::byte> temp;
 
-  REQUIRE_THROWS(mgr.Serialize(s1, std::back_inserter(temp)).or_throw());
+  REQUIRE_THROWS(mgr.serialize(s1, std::back_inserter(temp)).or_throw());
 
-  mgr.Register<S, ENKIWRAP(S, d), ENKIWRAP(S, i)>();
-  REQUIRE_NOTHROW(mgr.Serialize(s1, std::back_inserter(temp)).or_throw());
+  mgr.registerType<S, ENKIWRAP(S, d), ENKIWRAP(S, i)>();
+  REQUIRE_NOTHROW(mgr.serialize(s1, std::back_inserter(temp)).or_throw());
 
   {
     auto mgr2 = mgr;
 
     S sd;
 
-    const auto ser_res = mgr2.Serialize(s2, std::back_inserter(temp)).or_throw();
-    REQUIRE_NOTHROW(ser_res.or_throw());
-    REQUIRE(ser_res.size() == sizeof(S));
+    const auto serRes = mgr2.serialize(s2, std::back_inserter(temp)).or_throw();
+    REQUIRE_NOTHROW(serRes.or_throw());
+    REQUIRE(serRes.size() == sizeof(S));
 
-    const auto des_res = mgr2.Deserialize(sd, std::begin(temp)).or_throw();
-    REQUIRE_NOTHROW(des_res.or_throw());
+    const auto desRes = mgr2.deserialize(sd, std::begin(temp)).or_throw();
+    REQUIRE_NOTHROW(desRes.or_throw());
     REQUIRE(sd == s1);
   }
 
@@ -57,13 +59,13 @@ TEST_CASE("Manager copy/move behaves properly", "[manager][regression]")
 
     S sd;
 
-    const auto ser_res = mgr3.Serialize(s3, std::back_inserter(temp)).or_throw();
-    REQUIRE_NOTHROW(ser_res.or_throw());
-    REQUIRE(ser_res.size() == sizeof(S));
+    const auto serRes = mgr3.serialize(s3, std::back_inserter(temp)).or_throw();
+    REQUIRE_NOTHROW(serRes.or_throw());
+    REQUIRE(serRes.size() == sizeof(S));
 
-    const auto des_res = mgr3.Deserialize(sd, std::begin(temp)).or_throw();
-    REQUIRE_NOTHROW(des_res.or_throw());
-    REQUIRE(des_res.size() == sizeof(S));
+    const auto desRes = mgr3.deserialize(sd, std::begin(temp)).or_throw();
+    REQUIRE_NOTHROW(desRes.or_throw());
+    REQUIRE(desRes.size() == sizeof(S));
     REQUIRE(sd == s1);
 
     vmgr = std::move(mgr3);
@@ -72,13 +74,13 @@ TEST_CASE("Manager copy/move behaves properly", "[manager][regression]")
   {
     std::array<S, 3> as;
 
-    const auto des_res = std::get<enki::Manager<>>(vmgr).Deserialize(as, std::begin(temp));
+    const auto desRes = std::get<enki::Manager<>>(vmgr).deserialize(as, std::begin(temp));
 
-    REQUIRE_NOTHROW(des_res.or_throw());
+    REQUIRE_NOTHROW(desRes.or_throw());
     REQUIRE(as == std::array{s1, s2, s3});
   }
 
-  REQUIRE_THROWS(mgr.Serialize(S{}, std::back_inserter(temp)).or_throw());
+  REQUIRE_THROWS(mgr.serialize(S{}, std::back_inserter(temp)).or_throw());
 }
 
 TEST_CASE("Manager type can be instantiated, copied and moved", "[manager][regression]")

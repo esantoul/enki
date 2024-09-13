@@ -1,6 +1,7 @@
 #ifndef ENKI_BIN_WRITER_HPP
 #define ENKI_BIN_WRITER_HPP
 
+#include <algorithm>
 #include <bit>
 #include <vector>
 

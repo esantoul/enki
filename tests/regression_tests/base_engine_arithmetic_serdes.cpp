@@ -1,10 +1,10 @@
+#include <array>
 #include <cstddef>
 #include <cstdint>
-#include <array>
-
-#include "enki/legacy/base_engine.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+
+#include "enki/legacy/base_engine.hpp"
 
 TEST_CASE("Base Engine Arithmetic SerDes", "[base_engine][regression]")
 {
@@ -13,16 +13,16 @@ TEST_CASE("Base Engine Arithmetic SerDes", "[base_engine][regression]")
   std::array<std::byte, 4> temp{};
 
   {
-    const auto ser_res = enki::BaseEngine::Serialize(i, temp.begin());
-    REQUIRE_NOTHROW(ser_res.or_throw());
-    REQUIRE(ser_res.size() == sizeof(i));
-    REQUIRE(ser_res.get_iterator() == temp.end());
+    const auto serRes = enki::BaseEngine::serialize(i, temp.begin());
+    REQUIRE_NOTHROW(serRes.or_throw());
+    REQUIRE(serRes.size() == sizeof(i));
+    REQUIRE(serRes.get_iterator() == temp.end());
   }
   {
-    const auto des_res = enki::BaseEngine::Deserialize(j, temp.begin());
-    REQUIRE_NOTHROW(des_res.or_throw());
-    REQUIRE(des_res.size() == sizeof(i));
-    REQUIRE(des_res.get_iterator() == temp.end());
+    const auto desRes = enki::BaseEngine::deserialize(j, temp.begin());
+    REQUIRE_NOTHROW(desRes.or_throw());
+    REQUIRE(desRes.size() == sizeof(i));
+    REQUIRE(desRes.get_iterator() == temp.end());
   }
   REQUIRE(j == i);
 }

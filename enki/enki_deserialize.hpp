@@ -12,8 +12,7 @@ namespace enki
   namespace details
   {
     template <typename T, typename Reader>
-    concept immediately_readable = requires (Reader r, T & v)
-    {
+    concept immediately_readable = requires(Reader r, T &v) {
       { r.read(v) } -> std::same_as<enki::Success<void>>;
     };
   } // namespace details
@@ -39,15 +38,16 @@ namespace enki
         return isGood;
       }
       size_t i = 0;
-      std::all_of(std::begin(value), std::end(value), [numElements, &i, &r, &isGood](const auto &el) {
-        ++i;
-        isGood = deserialize(std::forward<decltype(el)>(el), r);
-        if (isGood && i != numElements)
-        {
-          r.nextArrayElement();
-        }
-        return static_cast<bool>(isGood);
-      });
+      std::all_of(
+        std::begin(value), std::end(value), [numElements, &i, &r, &isGood](const auto &el) {
+          ++i;
+          isGood = deserialize(std::forward<decltype(el)>(el), r);
+          if (isGood && i != numElements)
+          {
+            r.nextArrayElement();
+          }
+          return static_cast<bool>(isGood);
+        });
       if (isGood)
       {
         isGood = r.arrayEnd();
@@ -85,7 +85,8 @@ namespace enki
     }
     else if constexpr (concepts::custom_static_serializable<T>)
     {
-      return deserialize_custom_serializable(value, r, std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
+      return deserialize_custom_serializable(
+        value, r, std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
     }
     else
     {

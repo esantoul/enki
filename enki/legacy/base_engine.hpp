@@ -8,25 +8,25 @@ namespace enki
   class BaseEngine : public details::SerDesEngine<void>
   {
   private:
-    using Parent_t = details::SerDesEngine<void>;
+    using ParentType = details::SerDesEngine<void>;
 
   public:
     template <concepts::BasicSerializable T, concepts::ByteDataOutputIterator It>
-    static constexpr Success<It> Serialize(const T &val, It out)
+    static constexpr Success<It> serialize(const T &val, It out)
     {
-      return BaseEngine{}.Serialize_impl(val, out);
+      return BaseEngine{}.serializeImpl(val, out);
     }
 
     template <concepts::BasicSerializable T, concepts::ByteDataInputIterator It>
-    static constexpr Success<It> Deserialize(T &val, It in)
+    static constexpr Success<It> deserialize(T &val, It in)
     {
-      return BaseEngine{}.Deserialize_impl(val, in);
+      return BaseEngine{}.deserializeImpl(val, in);
     }
 
     template <concepts::BasicSerializable T>
     static constexpr Success<void> NumBytes(const T &val)
     {
-      return BaseEngine{}.NumBytes_impl(val);
+      return BaseEngine{}.numBytesImpl(val);
     }
 
   private:
@@ -37,23 +37,23 @@ namespace enki
     constexpr BaseEngine &operator=(BaseEngine &&) = delete;
 
     template <concepts::BasicSerializable T, concepts::ByteDataOutputIterator It>
-    constexpr Success<It> Serialize_impl(const T &val, It out) const
+    constexpr Success<It> serializeImpl(const T &val, It out) const
     {
-      return Parent_t::Serialize(val, out);
+      return ParentType::serialize(val, out);
     }
 
     template <concepts::BasicSerializable T, concepts::ByteDataInputIterator It>
-    constexpr Success<It> Deserialize_impl(T &val, It in) const
+    constexpr Success<It> deserializeImpl(T &val, It in) const
     {
-      return Parent_t::Deserialize(val, in);
+      return ParentType::deserialize(val, in);
     }
 
     template <concepts::BasicSerializable T>
-    constexpr Success<void> NumBytes_impl(const T &val) const
+    constexpr Success<void> numBytesImpl(const T &val) const
     {
-      return Parent_t::NumBytes(val);
+      return ParentType::numBytes(val);
     }
   };
-}
+} // namespace enki
 
 #endif // BASE_ENGINE_HPP

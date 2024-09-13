@@ -1,31 +1,33 @@
-#include <cstddef>
-#include <cstdint>
 #include <array>
 #include <bit>
-
-#include "enki/legacy/manager.hpp"
+#include <cstddef>
+#include <cstdint>
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "enki/legacy/manager.hpp"
+
 TEST_CASE("Manager Custom Type Register/Unregister", "[manager][regression]")
 {
-  struct S {};
+  struct S
+  {
+  };
 
   auto mgr = enki::Manager{};
 
   std::array<std::byte, 0> temp;
 
   // Non registered type should not be serializable
-  REQUIRE_THROWS(mgr.Serialize(S{}, temp.begin()).or_throw());
+  REQUIRE_THROWS(mgr.serialize(S{}, temp.begin()).or_throw());
 
-  mgr.Register<S>();
+  mgr.registerType<S>();
 
-  REQUIRE_NOTHROW(mgr.Serialize(S{}, temp.begin()).or_throw());
+  REQUIRE_NOTHROW(mgr.serialize(S{}, temp.begin()).or_throw());
 
-  mgr.Unregister<S>();
+  mgr.unregisterType<S>();
 
   // Unregistered type should be correctly unregistered
-  REQUIRE_THROWS(mgr.Serialize(S{}, temp.begin()).or_throw());
+  REQUIRE_THROWS(mgr.serialize(S{}, temp.begin()).or_throw());
 }
 
 TEST_CASE("Manager Custom Type Dynamic SerDes", "[manager][regression]")
@@ -44,18 +46,18 @@ TEST_CASE("Manager Custom Type Dynamic SerDes", "[manager][regression]")
 
   auto mgr = enki::Manager{};
 
-  mgr.Register<S, &S::i, &S::d>(); // you can register members in any order
+  mgr.registerType<S, &S::i, &S::d>(); // you can register members in any order
   {
-    const auto ser_res = mgr.Serialize(s1, temp.begin());
-    REQUIRE_NOTHROW(ser_res.or_throw());
-    REQUIRE(ser_res.size() == std::size(temp));
-    REQUIRE(ser_res.get_iterator() == temp.end());
+    const auto serRes = mgr.serialize(s1, temp.begin());
+    REQUIRE_NOTHROW(serRes.or_throw());
+    REQUIRE(serRes.size() == std::size(temp));
+    REQUIRE(serRes.get_iterator() == temp.end());
   }
   {
-    const auto des_res = mgr.Deserialize(s2, temp.begin());
-    REQUIRE_NOTHROW(des_res.or_throw());
-    REQUIRE(des_res.size() == std::size(temp));
-    REQUIRE(des_res.get_iterator() == temp.end());
+    const auto desRes = mgr.deserialize(s2, temp.begin());
+    REQUIRE_NOTHROW(desRes.or_throw());
+    REQUIRE(desRes.size() == std::size(temp));
+    REQUIRE(desRes.get_iterator() == temp.end());
   }
 
   REQUIRE(s1 == s2);
@@ -64,9 +66,10 @@ TEST_CASE("Manager Custom Type Dynamic SerDes", "[manager][regression]")
   {
     struct SerLayout
     {
-      std::array<std::byte, sizeof(decltype(S::i))> i;  // S::i should be serialized first
-      std::array<std::byte, sizeof(decltype(S::d))> d;  // S::d should be serialized second
+      std::array<std::byte, sizeof(decltype(S::i))> i; // S::i should be serialized first
+      std::array<std::byte, sizeof(decltype(S::d))> d; // S::d should be serialized second
     };
+
     const auto &serializedLayout = std::bit_cast<SerLayout>(temp);
     REQUIRE(s1.i == std::bit_cast<int>(serializedLayout.i));
     REQUIRE(s1.d == std::bit_cast<double>(serializedLayout.d));
@@ -91,18 +94,18 @@ TEST_CASE("Manager Custom Type With Bit Field Dynamic Serdes", "[manager][regres
 
   auto mgr = enki::Manager{};
 
-  mgr.Register<S, ENKIWRAP(S, val)>(); // use ENKIWRAP to register bit field
+  mgr.registerType<S, ENKIWRAP(S, val)>(); // use ENKIWRAP to register bit field
   {
-    const auto ser_res = mgr.Serialize(s1, temp.begin());
-    REQUIRE_NOTHROW(ser_res.or_throw());
-    REQUIRE(ser_res.size() == std::size(temp));
-    REQUIRE(ser_res.get_iterator() == temp.end());
+    const auto serRes = mgr.serialize(s1, temp.begin());
+    REQUIRE_NOTHROW(serRes.or_throw());
+    REQUIRE(serRes.size() == std::size(temp));
+    REQUIRE(serRes.get_iterator() == temp.end());
   }
   {
-    const auto des_res = mgr.Deserialize(s2, temp.begin());
-    REQUIRE_NOTHROW(des_res.or_throw());
-    REQUIRE(des_res.size() == std::size(temp));
-    REQUIRE(des_res.get_iterator() == temp.end());
+    const auto desRes = mgr.deserialize(s2, temp.begin());
+    REQUIRE_NOTHROW(desRes.or_throw());
+    REQUIRE(desRes.size() == std::size(temp));
+    REQUIRE(desRes.get_iterator() == temp.end());
   }
 
   REQUIRE(s1 == s2);
@@ -130,18 +133,18 @@ TEST_CASE("Manager Custom Type With Inherited Member Dynamic Serdes", "[manager]
 
   auto mgr = enki::Manager{};
 
-  mgr.Register<S, &SBase::val, &S::val>();
+  mgr.registerType<S, &SBase::val, &S::val>();
   {
-    const auto ser_res = mgr.Serialize(s1, temp.begin());
-    REQUIRE_NOTHROW(ser_res.or_throw());
-    REQUIRE(ser_res.size() == std::size(temp));
-    REQUIRE(ser_res.get_iterator() == temp.end());
+    const auto serRes = mgr.serialize(s1, temp.begin());
+    REQUIRE_NOTHROW(serRes.or_throw());
+    REQUIRE(serRes.size() == std::size(temp));
+    REQUIRE(serRes.get_iterator() == temp.end());
   }
   {
-    const auto des_res = mgr.Deserialize(s2, temp.begin());
-    REQUIRE_NOTHROW(des_res.or_throw());
-    REQUIRE(des_res.size() == std::size(temp));
-    REQUIRE(des_res.get_iterator() == temp.end());
+    const auto desRes = mgr.deserialize(s2, temp.begin());
+    REQUIRE_NOTHROW(desRes.or_throw());
+    REQUIRE(desRes.size() == std::size(temp));
+    REQUIRE(desRes.get_iterator() == temp.end());
   }
 
   REQUIRE(s1 == s2);

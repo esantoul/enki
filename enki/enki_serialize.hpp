@@ -11,8 +11,7 @@ namespace enki
   namespace details
   {
     template <typename T, typename Writer>
-    concept immediately_writeable = requires (Writer w, const T & v)
-    {
+    concept immediately_writeable = requires(Writer w, const T &v) {
       { w.write(v) } -> std::same_as<enki::Success<void>>;
     };
   } // namespace details
@@ -38,15 +37,16 @@ namespace enki
         return isGood;
       }
       size_t i = 0;
-      std::all_of(std::begin(value), std::end(value), [numElements, &i, &w, &isGood](const auto &el) {
-        ++i;
-        isGood = serialize(std::forward<decltype(el)>(el), w);
-        if (isGood && i != numElements)
-        {
-          w.nextArrayElement();
-        }
-        return static_cast<bool>(isGood);
-      });
+      std::all_of(
+        std::begin(value), std::end(value), [numElements, &i, &w, &isGood](const auto &el) {
+          ++i;
+          isGood = serialize(std::forward<decltype(el)>(el), w);
+          if (isGood && i != numElements)
+          {
+            w.nextArrayElement();
+          }
+          return static_cast<bool>(isGood);
+        });
       if (isGood)
       {
         isGood = w.arrayEnd();
@@ -72,15 +72,16 @@ namespace enki
         return isGood;
       }
       size_t i = 0;
-      std::all_of(std::begin(value), std::end(value), [&i, numElements, &w, &isGood](const auto &el) {
-        ++i;
-        isGood = serialize(std::forward<decltype(el)>(el), w);
-        if (isGood && i != numElements)
-        {
-          w.nextRangeElement();
-        }
-        return static_cast<bool>(isGood);
-      });
+      std::all_of(
+        std::begin(value), std::end(value), [&i, numElements, &w, &isGood](const auto &el) {
+          ++i;
+          isGood = serialize(std::forward<decltype(el)>(el), w);
+          if (isGood && i != numElements)
+          {
+            w.nextRangeElement();
+          }
+          return static_cast<bool>(isGood);
+        });
       if (isGood)
       {
         w.rangeEnd();
@@ -93,7 +94,8 @@ namespace enki
     }
     else if constexpr (concepts::custom_static_serializable<T>)
     {
-      return serialize_custom_serializable(value, w, std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
+      return serialize_custom_serializable(
+        value, w, std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
     }
     else
     {

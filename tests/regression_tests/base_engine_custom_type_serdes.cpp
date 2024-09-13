@@ -1,12 +1,11 @@
-#include <cstddef>
-#include <cstdint>
 #include <array>
 #include <bit>
+#include <cstddef>
 #include <tuple>
 
-#include "enki/legacy/base_engine.hpp"
-
 #include <catch2/catch_test_macros.hpp>
+
+#include "enki/legacy/base_engine.hpp"
 
 namespace
 {
@@ -14,57 +13,66 @@ namespace
   {
   public:
     constexpr MyClass() = default;
-    constexpr MyClass(double dd, int ii)
-      :
-      d(dd),
-      i(ii)
-    {}
+
+    constexpr MyClass(double dd, int ii) :
+      mD(dd),
+      mI(ii)
+    {
+    }
 
     constexpr bool operator==(const MyClass &) const = default;
 
     struct EnkiSerial;
 
-    constexpr int get_int() const { return i; }
-    constexpr double get_double() const { return d; }
+    constexpr int getInt() const
+    {
+      return mI;
+    }
+
+    constexpr double getDouble() const
+    {
+      return mD;
+    }
 
   private:
     friend struct SerialisationExpectedSuccess;
 
-    double d{};
-    int i{};
+    double mD{};
+    int mI{};
   };
 
   struct MyClass::EnkiSerial
   {
-    static constexpr auto members = std::make_tuple(&MyClass::i, &MyClass::d);
+    static constexpr auto members = std::make_tuple(&MyClass::mI, &MyClass::mD); // NOLINT
   };
 
   struct SerialisationExpectedSuccess
   {
-    std::array<std::byte, sizeof(decltype(MyClass::i))> i;  // MyClass::i should be serialized first
-    std::array<std::byte, sizeof(decltype(MyClass::d))> d;  // MyClass::d should be serialized second
+    std::array<std::byte, sizeof(decltype(MyClass::mI))> i; // MyClass::i should be serialized first
+    std::array<std::byte, sizeof(decltype(MyClass::mD))>
+      d; // MyClass::d should be serialized second
   };
-}
+} // namespace
 
 TEST_CASE("Base Engine Custom Type SerDes", "[manager][regression]")
 {
   const MyClass c1{3.14, 42};
   MyClass c2{};
 
-  static constexpr size_t numBytesS = enki::BaseEngine::NumBytes(MyClass{}).size();
-  std::array<std::byte, numBytesS> temp{};
+  static constexpr size_t kNumBytesToSerialize = enki::BaseEngine::NumBytes(MyClass{}).size();
+  std::array<std::byte, kNumBytesToSerialize> temp{};
 
   {
-    const auto ser_res = enki::BaseEngine::Serialize(c1, temp.begin());
-    REQUIRE_NOTHROW(ser_res.or_throw());
-    REQUIRE(ser_res.size() == std::size(temp));
-    REQUIRE(ser_res.get_iterator() == temp.end());
+    const auto serRes = enki::BaseEngine::serialize(c1, temp.begin());
+    REQUIRE_NOTHROW(serRes.or_throw());
+    REQUIRE(serRes.size() == std::size(temp));
+    REQUIRE(serRes.get_iterator() == temp.end());
   }
   {
-    const auto des_res = enki::BaseEngine::Deserialize(c2, temp.begin());
-    REQUIRE_NOTHROW(des_res.or_throw());
-    REQUIRE(des_res.size() == std::size(temp));
-    REQUIRE(des_res.get_iterator() == temp.end());
+    const auto desRes = enki::BaseEngine::deserialize(c2, temp.begin());
+    REQUIRE_NOTHROW(desRes.or_throw());
+    REQUIRE(desRes.size() == std::size(temp));
+    REQUIRE(desRes.get_iterator() == temp.end());
   }
 
   REQUIRE(c1 == c2);
@@ -72,7 +80,7 @@ TEST_CASE("Base Engine Custom Type SerDes", "[manager][regression]")
   // order of registration should be preserved
   {
     const auto &serializedLayout = std::bit_cast<SerialisationExpectedSuccess>(temp);
-    REQUIRE(c1.get_int() == std::bit_cast<int>(serializedLayout.i));
-    REQUIRE(c1.get_double() == std::bit_cast<double>(serializedLayout.d));
+    REQUIRE(c1.getInt() == std::bit_cast<int>(serializedLayout.i));
+    REQUIRE(c1.getDouble() == std::bit_cast<double>(serializedLayout.d));
   }
 }

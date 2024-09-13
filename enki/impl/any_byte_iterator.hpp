@@ -13,135 +13,202 @@ namespace enki
 
   namespace details
   {
-    class BaseByteOutputIt
+    class ByteOutputItInterface
     {
     public:
-      constexpr virtual ~BaseByteOutputIt() = default;
-      constexpr virtual BaseByteOutputIt &operator*() = 0;
-      constexpr virtual BaseByteOutputIt &operator=(std::byte) = 0;
-      constexpr virtual BaseByteOutputIt &operator++() = 0;
+      constexpr virtual ~ByteOutputItInterface() = default;
+      constexpr virtual ByteOutputItInterface &operator*() = 0;
+      constexpr virtual ByteOutputItInterface &operator=(std::byte) = 0;
+      constexpr virtual ByteOutputItInterface &operator++() = 0;
 
     protected:
       friend AnyByteOutputIt;
-      constexpr virtual BaseByteOutputIt *clone() = 0;
+      constexpr virtual ByteOutputItInterface *clone() = 0;
     };
 
     template <concepts::ByteDataOutputIterator It>
-    class SpecializedByteOutputIt : public BaseByteOutputIt
+    class SpecializedByteOutputIt : public ByteOutputItInterface
     {
     public:
-      constexpr ~SpecializedByteOutputIt() {};  // necessary because of a bug in gcc version <= 12
-      constexpr SpecializedByteOutputIt(It it)
-        :
-        mIt(it)
-      {}
+      constexpr ~SpecializedByteOutputIt() {}; // necessary because of a bug in gcc version <= 12
 
-      constexpr SpecializedByteOutputIt &operator*() final { return *this; }
-      constexpr SpecializedByteOutputIt &operator=(std::byte val) final { *mIt = static_cast<concepts::details::iterator_underlying_t<It>>(val); return *this; }
-      constexpr SpecializedByteOutputIt &operator++() final { ++mIt; return *this; }
+      constexpr SpecializedByteOutputIt(It it) :
+        mIt(it)
+      {
+      }
+
+      constexpr SpecializedByteOutputIt &operator*() final
+      {
+        return *this;
+      }
+
+      constexpr SpecializedByteOutputIt &operator=(std::byte val) final
+      {
+        *mIt = static_cast<concepts::details::iterator_underlying_t<It>>(val);
+        return *this;
+      }
+
+      constexpr SpecializedByteOutputIt &operator++() final
+      {
+        ++mIt;
+        return *this;
+      }
 
     private:
-      constexpr BaseByteOutputIt *clone() final { return new SpecializedByteOutputIt(mIt); }
+      constexpr ByteOutputItInterface *clone() final
+      {
+        return new SpecializedByteOutputIt(mIt);
+      }
+
       It mIt;
     };
 
     template <concepts::ByteDataOutputIterator It>
-    class RefByteOutputIt : public BaseByteOutputIt
+    class RefByteOutputIt : public ByteOutputItInterface
     {
     public:
-      constexpr ~RefByteOutputIt() {};  // necessary because of a bug in gcc version <= 12
-      constexpr RefByteOutputIt(It &it)
-        :
-        pIt(&it)
-      {}
+      constexpr ~RefByteOutputIt() {}; // necessary because of a bug in gcc version <= 12
 
-      constexpr RefByteOutputIt &operator*() final { return *this; }
-      constexpr RefByteOutputIt &operator=(std::byte val) final { **pIt = static_cast<concepts::details::iterator_underlying_t<It>>(val); return *this; }
-      constexpr RefByteOutputIt &operator++() final { ++*pIt; return *this; }
+      constexpr RefByteOutputIt(It &it) :
+        mPIt(&it)
+      {
+      }
+
+      constexpr RefByteOutputIt &operator*() final
+      {
+        return *this;
+      }
+
+      constexpr RefByteOutputIt &operator=(std::byte val) final
+      {
+        **mPIt = static_cast<concepts::details::iterator_underlying_t<It>>(val);
+        return *this;
+      }
+
+      constexpr RefByteOutputIt &operator++() final
+      {
+        ++*mPIt;
+        return *this;
+      }
 
     private:
-      constexpr BaseByteOutputIt *clone() final { return new RefByteOutputIt(*pIt); }
-      It *pIt;
+      constexpr ByteOutputItInterface *clone() final
+      {
+        return new RefByteOutputIt(*mPIt);
+      }
+
+      It *mPIt;
     };
-  }
+  } // namespace details
 
   template <typename It>
-  concept ByteDataOutputIteratorExceptSelf = (requires { typename It::AnyByteOutputIt_tag; } == false) && concepts::ByteDataOutputIterator<It>;
+  concept ByteDataOutputIteratorExceptSelf =
+    (requires { typename It::AnyByteOutputIt_tag; } == false) &&
+    concepts::ByteDataOutputIterator<It>;
 
   class AnyByteOutputIt
   {
   public:
-    using AnyByteOutputIt_tag = void;
-    using difference_type = ptrdiff_t;
-    using enki_value_type = std::byte;
+    using AnyByteOutputIt_tag = void;  // NOLINT
+    using difference_type = ptrdiff_t; // NOLINT
+    using enki_value_type = std::byte; // NOLINT
 
     template <ByteDataOutputIteratorExceptSelf It>
-    static constexpr AnyByteOutputIt Copy(It it)
+    static constexpr AnyByteOutputIt copy(It it)
     {
       AnyByteOutputIt ret;
-      ret.pIt = new details::SpecializedByteOutputIt<It>(std::move(it));
+      ret.mPIt = new details::SpecializedByteOutputIt<It>(std::move(it));
       return ret;
     }
 
     template <ByteDataOutputIteratorExceptSelf It>
-    static constexpr AnyByteOutputIt Ref(It &it)
+    static constexpr AnyByteOutputIt ref(It &it)
     {
       AnyByteOutputIt ret;
-      ret.pIt = new details::RefByteOutputIt<It>(it);
+      ret.mPIt = new details::RefByteOutputIt<It>(it);
       return ret;
     }
 
-    constexpr AnyByteOutputIt(const AnyByteOutputIt &other)
-      :
-      pIt(other.pIt->clone())
-    {}
+    constexpr AnyByteOutputIt(const AnyByteOutputIt &other) :
+      mPIt(other.mPIt->clone())
+    {
+    }
 
     constexpr AnyByteOutputIt &operator=(const AnyByteOutputIt &other)
     {
-      auto previousItPtr = pIt;
-      pIt = other.pIt->clone();
-      if (previousItPtr) delete previousItPtr;
+      auto pReviousIt = mPIt;
+      mPIt = other.mPIt->clone();
+      if (pReviousIt)
+      {
+        delete pReviousIt;
+      }
       return *this;
     }
 
-    constexpr ~AnyByteOutputIt() { if (pIt) delete pIt; }
-    constexpr AnyByteOutputIt &operator*() { return *this; };
-    constexpr void operator=(std::byte val) { (*pIt) = val; };
-    constexpr AnyByteOutputIt &operator++() { ++*pIt; return *this; };
-    constexpr AnyByteOutputIt operator++(int) { AnyByteOutputIt cp(*this); ++*this; return cp; }
+    constexpr ~AnyByteOutputIt()
+    {
+      if (mPIt)
+      {
+        delete mPIt;
+      }
+    }
+
+    constexpr AnyByteOutputIt &operator*()
+    {
+      return *this;
+    };
+
+    constexpr void operator=(std::byte val)
+    {
+      (*mPIt) = val;
+    };
+
+    constexpr AnyByteOutputIt &operator++()
+    {
+      ++*mPIt;
+      return *this;
+    };
+
+    constexpr AnyByteOutputIt operator++(int)
+    {
+      AnyByteOutputIt cp(*this);
+      ++*this;
+      return cp;
+    }
 
   private:
     constexpr AnyByteOutputIt() = default;
 
-    details::BaseByteOutputIt *pIt = nullptr;
+    details::ByteOutputItInterface *mPIt = nullptr;
   };
 
   class AnyByteInputIt;
 
   namespace details
   {
-    class BaseByteInputIt
+    class ByteInputItInterface
     {
     public:
-      constexpr virtual ~BaseByteInputIt() = default;
+      constexpr virtual ~ByteInputItInterface() = default;
       constexpr virtual const std::byte &operator*() const = 0;
-      constexpr virtual BaseByteInputIt &operator++() = 0;
+      constexpr virtual ByteInputItInterface &operator++() = 0;
 
     protected:
       friend AnyByteInputIt;
-      constexpr virtual BaseByteInputIt *clone() = 0;
+      constexpr virtual ByteInputItInterface *clone() = 0;
       constexpr virtual const void *address() const = 0;
     };
 
     template <concepts::ByteDataInputIterator It>
-    class SpecializedByteInputIt : public BaseByteInputIt
+    class SpecializedByteInputIt : public ByteInputItInterface
     {
     public:
-      constexpr ~SpecializedByteInputIt() {};  // necessary because of a bug in gcc version <= 12
-      constexpr SpecializedByteInputIt(It it)
-        :
+      constexpr ~SpecializedByteInputIt() {}; // necessary because of a bug in gcc version <= 12
+
+      constexpr SpecializedByteInputIt(It it) :
         mIt(it)
-      {}
+      {
+      }
 
       constexpr const std::byte &operator*() const final
       {
@@ -152,56 +219,97 @@ namespace enki
         return mCurrentValue.value();
       }
 
-      constexpr SpecializedByteInputIt &operator++() final { ++mIt; mCurrentValue.reset(); return *this; }
+      constexpr SpecializedByteInputIt &operator++() final
+      {
+        ++mIt;
+        mCurrentValue.reset();
+        return *this;
+      }
 
     private:
-      constexpr SpecializedByteInputIt *clone() final { return new SpecializedByteInputIt(mIt); }
-      constexpr const void *address() const final { return &*mIt; }
+      constexpr SpecializedByteInputIt *clone() final
+      {
+        return new SpecializedByteInputIt(mIt);
+      }
+
+      constexpr const void *address() const final
+      {
+        return &*mIt;
+      }
 
       It mIt;
       mutable std::optional<std::byte> mCurrentValue{};
     };
-  }
+  } // namespace details
 
   template <typename It>
-  concept ByteDataInputIteratorExceptSelf = (requires { typename It::AnyByteInputIt_tag; } == false) && concepts::ByteDataInputIterator<It>;
+  concept ByteDataInputIteratorExceptSelf =
+    (requires { typename It::AnyByteInputIt_tag; } == false) && concepts::ByteDataInputIterator<It>;
 
   class AnyByteInputIt
   {
   public:
-    using AnyByteInputIt_tag = void;
-    using value_type = std::byte;
-    using difference_type = ptrdiff_t;
-    using iterator_category = std::input_iterator_tag;
+    using AnyByteInputIt_tag = void;                   // NOLINT
+    using value_type = std::byte;                      // NOLINT
+    using difference_type = ptrdiff_t;                 // NOLINT
+    using iterator_category = std::input_iterator_tag; // NOLINT
 
     template <ByteDataInputIteratorExceptSelf It>
-    constexpr AnyByteInputIt(It it)
-      :
-      pIt(new details::SpecializedByteInputIt<It>(it))
-    {}
+    constexpr AnyByteInputIt(It it) :
+      mPIt(new details::SpecializedByteInputIt<It>(it))
+    {
+    }
 
-    constexpr AnyByteInputIt(const AnyByteInputIt &other)
-      :
-      pIt(other.pIt->clone())
-    {}
+    constexpr AnyByteInputIt(const AnyByteInputIt &other) :
+      mPIt(other.mPIt->clone())
+    {
+    }
 
     constexpr AnyByteInputIt &operator=(const AnyByteInputIt &other)
     {
-      auto previousItPtr = pIt;
-      pIt = other.pIt->clone();
-      if (previousItPtr) delete previousItPtr;
+      auto pPreviousIt = mPIt;
+      mPIt = other.mPIt->clone();
+      if (pPreviousIt)
+      {
+        delete pPreviousIt;
+      }
       return *this;
     }
 
-    constexpr ~AnyByteInputIt() { if (pIt) delete pIt; }
-    constexpr const std::byte &operator*() const { return **pIt; };
-    constexpr AnyByteInputIt &operator++() { ++*pIt; return *this; };
-    constexpr AnyByteInputIt operator++(int) { AnyByteInputIt cp(*this); ++*this; return cp; }
-    constexpr bool operator==(const AnyByteInputIt &other) const { return pIt->address() == other.pIt->address(); }
+    constexpr ~AnyByteInputIt()
+    {
+      if (mPIt)
+      {
+        delete mPIt;
+      }
+    }
+
+    constexpr const std::byte &operator*() const
+    {
+      return **mPIt;
+    };
+
+    constexpr AnyByteInputIt &operator++()
+    {
+      ++*mPIt;
+      return *this;
+    };
+
+    constexpr AnyByteInputIt operator++(int)
+    {
+      AnyByteInputIt cp(*this);
+      ++*this;
+      return cp;
+    }
+
+    constexpr bool operator==(const AnyByteInputIt &other) const
+    {
+      return mPIt->address() == other.mPIt->address();
+    }
 
   private:
-    details::BaseByteInputIt *pIt = nullptr;
+    details::ByteInputItInterface *mPIt = nullptr;
   };
-}
+} // namespace enki
 
 #endif // ANY_BYTE_ITERATOR_HPP

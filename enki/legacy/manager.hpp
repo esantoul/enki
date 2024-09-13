@@ -1,16 +1,14 @@
 #ifndef ENKI_MANAGER_HPP
 #define ENKI_MANAGER_HPP
 
-#include <algorithm>
-#include <array>
-#include <unordered_map>
 #include <iterator>
+#include <unordered_map>
 
-#include "enki/impl/type_info.hpp"
+#include "enki/impl/any_byte_iterator.hpp"
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/cstr.hpp"
 #include "enki/impl/serdes_engine.hpp"
-#include "enki/impl/any_byte_iterator.hpp"
+#include "enki/impl/type_info.hpp"
 
 namespace enki
 {
@@ -24,30 +22,31 @@ namespace enki
     constexpr Manager() = default;
 
     template <typename T, auto... mem>
-      requires (concepts::class_member<T, mem> && ...)
-    constexpr void Register()
+      requires(concepts::class_member<T, mem> && ...)
+    constexpr void registerType()
     {
       mConverters[Type::get_index<T>()] = &kSpecializedHandler<T, mem...>;
     }
 
     template <typename T>
-    constexpr void Unregister()
+    constexpr void unregisterType()
     {
       mConverters.erase(Type::get_index<T>());
     }
 
     template <typename T, concepts::ByteDataOutputIterator It>
-    constexpr Success<It> Serialize(const T &val, It out) const
+    constexpr Success<It> serialize(const T &val, It out) const
     {
       if constexpr (concepts::BasicSerializable<T>)
       {
-        return ParentEngine::Serialize(val, out);
+        return ParentEngine::serialize(val, out);
       }
       else
       {
         if (auto it = mConverters.find(Type::get_index<T>()); it != mConverters.end())
         {
-          auto res = static_cast<const TypeSerDesHandler<T>*>(it->second)->Serialize(this, val, AnyByteOutputIt::Ref(out));
+          auto res = static_cast<const TypeSerDesHandlerInterface<T> *>(it->second)
+                       ->serialize(this, val, AnyByteOutputIt::ref(out));
           if (res)
           {
             return {res.size(), out};
@@ -59,23 +58,24 @@ namespace enki
         }
         else
         {
-          return {serial_error<T>.begin(), out};
+          return {kSerialError<T>.begin(), out};
         }
       }
     }
 
     template <typename T, concepts::ByteDataInputIterator It>
-    constexpr Success<It> Deserialize(T &val, It in) const
+    constexpr Success<It> deserialize(T &val, It in) const
     {
       if constexpr (concepts::BasicSerializable<T>)
       {
-        return ParentEngine::Deserialize(val, in);
+        return ParentEngine::deserialize(val, in);
       }
       else
       {
         if (auto it = mConverters.find(Type::get_index<T>()); it != mConverters.end())
         {
-          auto res = static_cast<const TypeSerDesHandler<T>*>(it->second)->Deserialize(this, val, in);
+          auto res = static_cast<const TypeSerDesHandlerInterface<T> *>(it->second)
+                       ->deserialize(this, val, in);
           std::advance(in, res.size());
           if (res)
           {
@@ -88,36 +88,39 @@ namespace enki
         }
         else
         {
-          return {deserial_error<T>.begin(), in};
+          return {kDeserialError<T>.begin(), in};
         }
       }
     }
 
     template <typename T>
-    constexpr Success<void> NumBytes(const T &val) const
+    constexpr Success<void> numBytes(const T &val) const
     {
       if constexpr (concepts::BasicSerializable<T>)
       {
-        return ParentEngine::NumBytes(val);
+        return ParentEngine::numBytes(val);
       }
       else
       {
         if (auto it = mConverters.find(Type::get_index<T>()); it != mConverters.end())
         {
-          return static_cast<const TypeSerDesHandler<T>*>(it->second)->NumBytes(this, val);
+          return static_cast<const TypeSerDesHandlerInterface<T> *>(it->second)
+            ->numBytes(this, val);
         }
         else
         {
-          return serial_error<T>.begin();
+          return kSerialError<T>.begin();
         }
       }
     }
 
   private:
     template <typename T>
-    static constexpr auto serial_error = CStrConcat<"Type ", get_type_name<T>(), " has not been registered for serialization">();
+    static constexpr auto kSerialError =
+      cStrConcat<"Type ", get_type_name<T>(), " has not been registered for serialization">();
     template <typename T>
-    static constexpr auto deserial_error = CStrConcat<"Type ", get_type_name<T>(), " has not been registered for deserialization">();
+    static constexpr auto kDeserialError =
+      cStrConcat<"Type ", get_type_name<T>(), " has not been registered for deserialization">();
 
     class BaseCustomSerDesHandler
     {
@@ -126,93 +129,104 @@ namespace enki
     };
 
     template <typename T>
-    class TypeSerDesHandler : public BaseCustomSerDesHandler
+    class TypeSerDesHandlerInterface : public BaseCustomSerDesHandler
     {
     public:
-      constexpr virtual Success<AnyByteOutputIt> Serialize(const Manager *, const T &, AnyByteOutputIt) const = 0;
-      constexpr virtual Success<AnyByteInputIt> Deserialize(const Manager *, T &, AnyByteInputIt) const = 0;
-      constexpr virtual Success<void> NumBytes(const Manager *, const T &) const = 0;
+      constexpr virtual Success<AnyByteOutputIt>
+      serialize(const Manager *, const T &, AnyByteOutputIt) const = 0;
+      constexpr virtual Success<AnyByteInputIt>
+      deserialize(const Manager *, T &, AnyByteInputIt) const = 0;
+      constexpr virtual Success<void> numBytes(const Manager *, const T &) const = 0;
     };
 
-    template <typename T, auto ... mem>
-    class SpecializedTypeSerDesHandler : public TypeSerDesHandler<T>
+    template <typename T, auto... mem>
+    class SpecializedTypeSerDesHandler : public TypeSerDesHandlerInterface<T>
     {
     public:
       constexpr ~SpecializedTypeSerDesHandler() = default;
 
-      constexpr Success<AnyByteOutputIt> Serialize(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const final
+      constexpr Success<AnyByteOutputIt>
+      serialize(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const final
       {
         static_cast<void>(pMgr); // avoid unused variable warning
         Success<AnyByteOutputIt> res(static_cast<size_t>(0), out);
-        // out underlying iterator is auto updated because out holds a reference to the original output iterator
-        // see call to this very method
-        static_cast<void>((static_cast<bool>(res.update(Serialize_one<mem>(pMgr, inst, out))) && ...));
+        // out underlying iterator is auto updated because out holds a reference to the original
+        // output iterator see call to this very method
+        static_cast<void>(
+          (static_cast<bool>(res.update(serializeOne<mem>(pMgr, inst, out))) && ...));
         return res;
       }
 
-      constexpr Success<AnyByteInputIt> Deserialize(const Manager *pMgr, T &inst, AnyByteInputIt in) const final
+      constexpr Success<AnyByteInputIt>
+      deserialize(const Manager *pMgr, T &inst, AnyByteInputIt in) const final
       {
         static_cast<void>(pMgr); // avoid unused variable warning
         Success<AnyByteInputIt> res(static_cast<size_t>(0), in);
         static_cast<void>(([this, pMgr, &res, &in, &inst] {
-          auto r = Deserialize_one<mem>(pMgr, inst, in);
+          auto r = deserializeOne<mem>(pMgr, inst, in);
           std::advance(in, r.size());
           return static_cast<bool>(res.update(r));
         }() && ...));
         return res;
       }
 
-      constexpr Success<void> NumBytes(const Manager *pMgr, const T &inst) const final
+      constexpr Success<void> numBytes(const Manager *pMgr, const T &inst) const final
       {
         static_cast<void>(pMgr); // avoid unused variable warning
         Success<void> res{};
-        static_cast<void>((static_cast<bool>(res.update(NumBytes_one<mem>(pMgr, inst))) && ...));
+        static_cast<void>((static_cast<bool>(res.update(numBytesOne<mem>(pMgr, inst))) && ...));
         return res;
       }
 
     private:
       template <auto onemem>
-      constexpr Success<AnyByteOutputIt> Serialize_one(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
+      constexpr Success<AnyByteOutputIt>
+      serializeOne(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
       {
-        return pMgr->Serialize(inst.*onemem, out);
-        // out underlying iterator is auto updated because out holds a reference to the original output iterator
+        return pMgr->serialize(inst.*onemem, out);
+        // out underlying iterator is auto updated because out holds a reference to the original
+        // output iterator
       }
 
       template <auto onemem>
         requires concepts::proper_member_wrapper<T, decltype(onemem)>
-      constexpr Success<AnyByteOutputIt> Serialize_one(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
+      constexpr Success<AnyByteOutputIt>
+      serializeOne(const Manager *pMgr, const T &inst, AnyByteOutputIt out) const
       {
-        return pMgr->Serialize(onemem.getter(inst), out);
-        // out underlying iterator is auto updated because out holds a reference to the original output iterator
+        return pMgr->serialize(onemem.getter(inst), out);
+        // out underlying iterator is auto updated because out holds a reference to the original
+        // output iterator
       }
 
       template <auto onemem>
-      constexpr Success<AnyByteInputIt> Deserialize_one(const Manager *pMgr, T &inst, AnyByteInputIt in) const
+      constexpr Success<AnyByteInputIt>
+      deserializeOne(const Manager *pMgr, T &inst, AnyByteInputIt in) const
       {
-        return pMgr->Deserialize(inst.*onemem, in);
+        return pMgr->deserialize(inst.*onemem, in);
       }
 
       template <auto onemem>
         requires concepts::proper_member_wrapper<T, decltype(onemem)>
-      constexpr Success<AnyByteInputIt> Deserialize_one(const Manager *pMgr, T &inst, AnyByteInputIt in) const
+      constexpr Success<AnyByteInputIt>
+      deserializeOne(const Manager *pMgr, T &inst, AnyByteInputIt in) const
       {
         typename decltype(onemem)::value_type temp{};
-        auto r = pMgr->Deserialize(temp, in);
+        auto r = pMgr->deserialize(temp, in);
         onemem.setter(inst, temp);
         return r;
       }
 
       template <auto onemem>
-      constexpr Success<void> NumBytes_one(const Manager *pMgr, const T &inst) const
+      constexpr Success<void> numBytesOne(const Manager *pMgr, const T &inst) const
       {
-        return pMgr->NumBytes(inst.*onemem);
+        return pMgr->numBytes(inst.*onemem);
       }
 
       template <auto onemem>
         requires concepts::proper_member_wrapper<T, decltype(onemem)>
-      constexpr Success<void> NumBytes_one(const Manager *pMgr, const T &inst) const
+      constexpr Success<void> numBytesOne(const Manager *pMgr, const T &inst) const
       {
-        return pMgr->NumBytes(onemem.getter(inst));
+        return pMgr->numBytes(onemem.getter(inst));
       }
     };
 

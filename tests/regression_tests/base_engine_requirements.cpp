@@ -2,9 +2,9 @@
 #include <concepts>
 #include <type_traits>
 
-#include "enki/legacy/base_engine.hpp"
-
 #include "catch2/catch_test_macros.hpp"
+
+#include "enki/legacy/base_engine.hpp"
 
 TEST_CASE("Base Engine is a stateless shell", "[base_engine][regression]")
 {
@@ -13,8 +13,10 @@ TEST_CASE("Base Engine is a stateless shell", "[base_engine][regression]")
   static_assert(std::movable<enki::BaseEngine> == false);
   static_assert(std::assignable_from<enki::BaseEngine &, enki::BaseEngine> == false);
 
-  struct S {};
+  struct S
+  {
+  };
+
   static_assert(sizeof(S) == sizeof(enki::BaseEngine));
   REQUIRE(true);
 }
-

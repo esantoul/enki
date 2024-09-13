@@ -3,12 +3,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <numeric>
-#include <vector>
-#include <deque>
-
-#include "enki/impl/any_byte_iterator.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+
+#include "enki/impl/any_byte_iterator.hpp"
 
 TEST_CASE("Any Byte Input Iterator Works With Any Byte Type", "[any_byte_iterator][unit]")
 {
@@ -24,7 +22,5 @@ TEST_CASE("Any Byte Input Iterator Works With Any Byte Type", "[any_byte_iterato
     enki::AnyByteInputIt(v2.begin()),
     enki::AnyByteInputIt(v2.end()),
     enki::AnyByteInputIt(v1.begin()),
-    [](std::byte lh, std::byte rh) {
-    return lh == rh;
-  }));
+    [](std::byte lh, std::byte rh) { return lh == rh; }));
 }

@@ -14,10 +14,10 @@ namespace enki
   class BinReader
   {
   public:
-    BinReader(std::span<const std::byte> data)
-      :
+    BinReader(std::span<const std::byte> data) :
       mData(std::begin(data), std::end(data))
-    {}
+    {
+    }
 
     template <concepts::arithmetic_or_enum T>
     constexpr Success<void> read(T &v)
