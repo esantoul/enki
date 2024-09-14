@@ -17,6 +17,9 @@ namespace enki
 
     template <typename T, typename Writer, size_t... idx>
     Success<void> serializeTupleLike(const T &value, Writer &&w, std::index_sequence<idx...>);
+
+    template <typename T, typename Writer, size_t... idx>
+    Success<void> serializeCustom(const T &value, Writer &&w, std::index_sequence<idx...>);
   } // namespace detail
 
   template <typename T, typename Writer>
@@ -101,7 +104,7 @@ namespace enki
     }
     else if constexpr (concepts::custom_static_serializable<T>)
     {
-      return serialize_custom_serializable(
+      return detail::serializeCustom(
         value, w, std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
     }
     else
@@ -138,6 +141,59 @@ namespace enki
         };
 
       (serializeOne(std::get<idx>(value), writer, ret, i) && ...);
+
+      if (ret)
+      {
+        ret.update(writer.arrayEnd());
+      }
+
+      return ret;
+    }
+
+    template <auto member, concepts::custom_static_serializable T, typename Writer>
+    constexpr bool
+    serializeOneCustom(const T &inst, Writer &&writer, Success<void> &isGood, bool isLast)
+    {
+      if (isGood.update(serialize(inst.*member, writer)) && !isLast)
+      {
+        if (!isGood.update(writer.nextArrayElement()))
+        {
+          return false;
+        }
+      }
+
+      return static_cast<bool>(isGood);
+    }
+
+    template <auto member, concepts::custom_static_serializable T, typename Writer>
+      requires concepts::proper_member_wrapper<T, decltype(member)>
+    constexpr bool
+    serializeOneCustom(const T &inst, Writer &&writer, Success<void> &isGood, bool isLast)
+    {
+      if (isGood.update(serialize(member.getter(inst), writer)) && !isLast)
+      {
+        if (!isGood.update(writer.nextArrayElement()))
+        {
+          return false;
+        }
+      }
+
+      return static_cast<bool>(isGood);
+    }
+
+    template <typename T, typename Writer, size_t... idx>
+    Success<void> serializeCustom(const T &value, Writer &&writer, std::index_sequence<idx...>)
+    {
+      Success<void> ret = writer.arrayBegin();
+      if (!ret)
+      {
+        return ret;
+      }
+      size_t i = 0;
+
+      (serializeOneCustom<std::get<idx>(T::EnkiSerial::members)>(
+         value, writer, ret, (++i) == sizeof...(idx)) &&
+       ...);
 
       if (ret)
       {

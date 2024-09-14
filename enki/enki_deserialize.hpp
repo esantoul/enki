@@ -19,6 +19,9 @@ namespace enki
 
     template <typename T, typename Reader, size_t... idx>
     Success<void> deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>);
+
+    template <typename T, typename Reader, size_t... idx>
+    Success<void> deserializeCustom(T &value, Reader &&w, std::index_sequence<idx...>);
   } // namespace detail
 
   template <typename T, typename Reader>
@@ -95,7 +98,7 @@ namespace enki
     }
     else if constexpr (concepts::custom_static_serializable<T>)
     {
-      return deserialize_custom_serializable(
+      return detail::deserializeCustom(
         value, r, std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
     }
     else
@@ -131,6 +134,66 @@ namespace enki
       };
 
       (deserializeOne(std::get<idx>(value), reader, ret, i) && ...);
+
+      if (ret)
+      {
+        ret.update(reader.arrayEnd());
+      }
+
+      return ret;
+    }
+
+    template <auto member, concepts::custom_static_serializable T, typename Reader>
+    constexpr bool
+    deserializeOneCustom(T &inst, Reader &&reader, Success<void> &isGood, bool isLast)
+    {
+      if (isGood.update(deserialize(inst.*member, reader)) && !isLast)
+      {
+        if (!isGood.update(reader.nextArrayElement()))
+        {
+          return false;
+        }
+      }
+
+      return static_cast<bool>(isGood);
+    }
+
+    template <auto member, concepts::custom_static_serializable T, typename Reader>
+      requires concepts::proper_member_wrapper<T, decltype(member)>
+    constexpr bool
+    deserializeOneCustom(T &inst, Reader &&reader, Success<void> &isGood, bool isLast)
+    {
+      typename decltype(member)::value_type temp{};
+      if (!isGood.update(deserialize(temp, reader)))
+      {
+        return false;
+      }
+      member.setter(inst, temp);
+
+      if (!isLast)
+      {
+        if (!isGood.update(reader.nextArrayElement()))
+        {
+          return false;
+        }
+      }
+
+      return static_cast<bool>(isGood);
+    }
+
+    template <typename T, typename Reader, size_t... idx>
+    Success<void> deserializeCustom(T &value, Reader &&reader, std::index_sequence<idx...>)
+    {
+      Success<void> ret = reader.arrayBegin();
+      if (!ret)
+      {
+        return ret;
+      }
+      size_t i = 0;
+
+      (deserializeOneCustom<std::get<idx>(T::EnkiSerial::members)>(
+         value, reader, ret, (++i) == sizeof...(idx)) &&
+       ...);
 
       if (ret)
       {
