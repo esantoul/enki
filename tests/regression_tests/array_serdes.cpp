@@ -9,7 +9,7 @@
 #include "enki/enki_deserialize.hpp"
 #include "enki/enki_serialize.hpp"
 
-TEST_CASE("C-Array SerDes", "[base_engine][regression]")
+TEST_CASE("C-Array SerDes", "[regression]")
 {
   const int64_t carr1[] = {1337, -99};
 
@@ -28,7 +28,7 @@ TEST_CASE("C-Array SerDes", "[base_engine][regression]")
   REQUIRE(std::equal(std::begin(carr1), std::end(carr1), std::begin(carr2)));
 }
 
-TEST_CASE("C++ Array (std::array) SerDes", "[base_engine][regression]")
+TEST_CASE("C++ Array (std::array) SerDes", "[regression]")
 {
   const std::array<int64_t, 2> arr1 = {1337, -99};
 

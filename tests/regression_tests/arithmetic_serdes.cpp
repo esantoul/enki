@@ -7,7 +7,7 @@
 #include "enki/enki_deserialize.hpp"
 #include "enki/enki_serialize.hpp"
 
-TEST_CASE("Arithmetic SerDes", "[base_engine][regression]")
+TEST_CASE("Arithmetic SerDes", "[regression]")
 {
   enki::BinWriter writer;
 
