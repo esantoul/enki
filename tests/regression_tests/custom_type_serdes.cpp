@@ -59,7 +59,7 @@ namespace
   };
 } // namespace
 
-TEST_CASE("Custom Type SerDes", "[manager][regression]")
+TEST_CASE("Custom Type Tagged With Member Pointers SerDes", "[regression]")
 {
   const MyClass c1{3.14, 42};
   MyClass c2{};
@@ -83,5 +83,58 @@ TEST_CASE("Custom Type SerDes", "[manager][regression]")
     const auto &serializedLayout = std::bit_cast<SerialisationExpectedSuccess>(serializationOutput);
     REQUIRE(c1.getInt() == std::bit_cast<int>(serializedLayout.i));
     REQUIRE(c1.getDouble() == std::bit_cast<double>(serializedLayout.d));
+  }
+}
+
+namespace
+{
+  struct BitStruct
+  {
+    uint8_t a : 1;
+    uint8_t b : 2;
+    uint8_t c : 3;
+    uint8_t d : 2;
+
+    constexpr auto operator<=>(const BitStruct &) const noexcept = default;
+
+    struct EnkiSerial;
+  };
+
+  struct BitStruct::EnkiSerial
+  {
+    // NOLINTNEXTLINE
+    static constexpr auto members = std::make_tuple(
+      ENKIWRAP(BitStruct, b),
+      ENKIWRAP(BitStruct, c),
+      ENKIWRAP(BitStruct, d),
+      ENKIWRAP(BitStruct, a));
+  };
+} // namespace
+
+TEST_CASE("Custom Type Tagged With Bitfields SerDes", "[regression]")
+{
+  static_assert(sizeof(BitStruct) == 1);
+
+  const BitStruct c1{1, 2, 7, 3};
+  BitStruct c2{};
+
+  enki::BinWriter writer;
+
+  const auto serRes = enki::serialize(c1, writer);
+  REQUIRE_NOTHROW(serRes.or_throw());
+  REQUIRE(serRes.size() == 4);
+
+  const auto desRes = enki::deserialize(c2, enki::BinReader(writer.data()));
+  REQUIRE_NOTHROW(desRes.or_throw());
+  REQUIRE(desRes.size() == 4);
+
+  REQUIRE(c1 == c2);
+
+  // order of registration should be preserved
+  {
+    std::array<std::byte, 4> serializationOutput;
+    std::copy(std::begin(writer.data()), std::end(writer.data()), serializationOutput.begin());
+    static constexpr uint32_t kExpectedSerializationData = 0x01'03'07'02;
+    REQUIRE(std::bit_cast<uint32_t>(serializationOutput) == kExpectedSerializationData);
   }
 }
