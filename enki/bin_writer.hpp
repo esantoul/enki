@@ -14,6 +14,8 @@ namespace enki
   class BinWriter
   {
   public:
+    using size_type = SizeType; // NOLINT
+
     template <concepts::arithmetic_or_enum T>
     constexpr Success<void> write(const T &v)
     {

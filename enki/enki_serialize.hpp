@@ -61,16 +61,16 @@ namespace enki
     else if constexpr (concepts::range_constructible_container<T>)
     {
       Success<void> isGood;
-      const size_t numElements = [&value] {
-        if constexpr (requires { std::size(value); })
+      const size_t numElements = [](const T &v) {
+        if constexpr (requires { std::size(v); })
         {
-          return std::size(value);
+          return std::size(v);
         }
         else
         {
-          return std::distance(std::begin(value), std::end(value));
+          return std::distance(std::begin(v), std::end(v));
         }
-      }();
+      }(value);
       isGood = w.rangeBegin(numElements);
       if (!isGood)
       {
@@ -80,8 +80,7 @@ namespace enki
       std::all_of(
         std::begin(value), std::end(value), [&i, numElements, &w, &isGood](const auto &el) {
           ++i;
-          isGood = serialize(std::forward<decltype(el)>(el), w);
-          if (isGood && i != numElements)
+          if (isGood.update(serialize(std::forward<decltype(el)>(el), w)) && i != numElements)
           {
             if (!isGood.update(w.nextArrayElement()))
             {

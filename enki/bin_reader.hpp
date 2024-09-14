@@ -14,6 +14,8 @@ namespace enki
   class BinReader
   {
   public:
+    using size_type = SizeType; // NOLINT
+
     BinReader(std::span<const std::byte> data) :
       mData(std::begin(data), std::end(data))
     {

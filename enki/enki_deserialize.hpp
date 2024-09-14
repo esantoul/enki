@@ -70,8 +70,7 @@ namespace enki
       std::vector<typename T::value_type> temp(numElements);
       for (size_t i = 0; i < numElements && isGood; ++i)
       {
-        isGood = deserialize(temp[i], r);
-        if (isGood && i != numElements)
+        if (isGood.update(deserialize(temp[i], r)) && i != numElements)
         {
           if (!isGood.update(r.nextRangeElement()))
           {
