@@ -5,10 +5,10 @@
 
 namespace enki
 {
-  class BaseEngine : public details::SerDesEngine<void>
+  class BaseEngine : public detail::SerDesEngine<void>
   {
   private:
-    using ParentType = details::SerDesEngine<void>;
+    using ParentType = detail::SerDesEngine<void>;
 
   public:
     template <concepts::BasicSerializable T, concepts::ByteDataOutputIterator It>

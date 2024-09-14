@@ -6,6 +6,7 @@
 
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/success.hpp"
+#include "enki/impl/utilities.hpp"
 
 namespace enki
 {
@@ -67,7 +68,9 @@ namespace enki
       {
         return isGood;
       }
-      std::vector<typename T::value_type> temp(numElements);
+      using value_type = detail::assignable_value_t<T>; // NOLINT
+
+      std::vector<value_type> temp(numElements);
       for (size_t i = 0; i < numElements && isGood; ++i)
       {
         if (isGood.update(deserialize(temp[i], r)) && i != numElements)

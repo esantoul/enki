@@ -5,7 +5,7 @@
 
 namespace enki
 {
-  namespace details
+  namespace detail
   {
     template <concepts::range_constructible_container T>
     struct AssignableValue
@@ -21,7 +21,7 @@ namespace enki
 
     template <concepts::range_constructible_container T>
     using assignable_value_t = typename AssignableValue<T>::type; // NOLINT
-  } // namespace details
+  } // namespace detail
 
   struct WrapperBase
   {

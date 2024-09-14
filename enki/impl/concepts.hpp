@@ -11,7 +11,7 @@
 
 namespace enki::concepts
 {
-  namespace details
+  namespace detail
   {
     template <typename T>
     struct is_array_like : std::false_type // NOLINT
@@ -27,7 +27,7 @@ namespace enki::concepts
     struct is_array_like<T[cty]> : std::true_type
     {
     };
-  } // namespace details
+  } // namespace detail
 
   template <typename T>
   concept arithmetic_or_enum = std::integral<T> || std::floating_point<T> || std::is_enum_v<T>;
@@ -55,7 +55,7 @@ namespace enki::concepts
       typename T::value_type>;
 
   template <typename T>
-  concept array_like = details::is_array_like<T>::value;
+  concept array_like = detail::is_array_like<T>::value;
 
   template <typename T>
   concept optional_like = std::convertible_to<typename T::value_type, T> &&
@@ -65,24 +65,24 @@ namespace enki::concepts
                             { t.value() } -> std::convertible_to<typename T::value_type>;
                           };
 
-  namespace details
+  namespace detail
   {
     template <typename T, size_t... idx>
     constexpr bool allVariantIndexesGood(std::index_sequence<idx...>)
     {
       return (std::convertible_to<std::variant_alternative_t<idx, T>, T> && ...);
     }
-  } // namespace details
+  } // namespace detail
 
   template <typename T>
   concept variant_like = requires(T t) {
     { t.index() } -> std::convertible_to<size_t>;
     std::visit([](const auto &) {}, t);
     std::variant_size_v<T>;
-    details::allVariantIndexesGood<T>(std::make_index_sequence<std::variant_size_v<T>>());
-  } && details::allVariantIndexesGood<T>(std::make_index_sequence<std::variant_size_v<T>>());
+    detail::allVariantIndexesGood<T>(std::make_index_sequence<std::variant_size_v<T>>());
+  } && detail::allVariantIndexesGood<T>(std::make_index_sequence<std::variant_size_v<T>>());
 
-  namespace details
+  namespace detail
   {
     template <typename It>
     struct IteratorUnderlying
@@ -106,17 +106,17 @@ namespace enki::concepts
 
     template <typename It>
     using iterator_underlying_t = typename IteratorUnderlying<It>::value_type; // NOLINT
-  } // namespace details
+  } // namespace detail
 
   template <typename It>
   concept ByteDataOutputIterator =
-    std::input_or_output_iterator<It> && (sizeof(details::iterator_underlying_t<It>) == 1) &&
-    requires(It it) { *it = static_cast<details::iterator_underlying_t<It>>(std::byte{}); } &&
+    std::input_or_output_iterator<It> && (sizeof(detail::iterator_underlying_t<It>) == 1) &&
+    requires(It it) { *it = static_cast<detail::iterator_underlying_t<It>>(std::byte{}); } &&
     requires(It it, It it2) { it2 = it; };
 
   template <typename It>
   concept ByteDataInputIterator =
-    std::input_iterator<It> && (sizeof(details::iterator_underlying_t<It>) == 1) &&
+    std::input_iterator<It> && (sizeof(detail::iterator_underlying_t<It>) == 1) &&
     requires(It it) { static_cast<std::byte>(*it); } && requires(It it, It it2) { it2 = it; };
 
   template <typename It>
@@ -138,7 +138,7 @@ namespace enki::concepts
                                     MW::setter;
                                   };
 
-  namespace details
+  namespace detail
   {
     template <auto p>
     struct MemberPointer : std::false_type
@@ -151,27 +151,27 @@ namespace enki::concepts
       using class_type = T; // NOLINT
       using value_type = M; // NOLINT
     };
-  } // namespace details
+  } // namespace detail
 
   template <typename T, auto p>
   concept class_member = proper_member_wrapper<T, decltype(p)> ||
-                         (details::MemberPointer<p>::value &&
-                          std::derived_from<T, typename details::MemberPointer<p>::class_type>);
+                         (detail::MemberPointer<p>::value &&
+                          std::derived_from<T, typename detail::MemberPointer<p>::class_type>);
 
-  namespace details
+  namespace detail
   {
     template <typename T, size_t... idx>
     constexpr bool isTupleOfClassMembers(std::index_sequence<idx...>)
     {
       return (class_member<T, std::get<idx>(T::EnkiSerial::members)> && ...);
     }
-  } // namespace details
+  } // namespace detail
 
   template <typename T>
   concept custom_static_serializable =
     requires(T inst) { std::tuple_size<decltype(T::EnkiSerial::members)>::value; } &&
     (std::tuple_size_v<decltype(T::EnkiSerial::members)> >= 1) &&
-    details::isTupleOfClassMembers<T>(
+    detail::isTupleOfClassMembers<T>(
       std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
 
   template <typename T>

@@ -11,7 +11,7 @@
 
 namespace enki
 {
-  namespace details
+  namespace detail
   {
     template <typename Derived>
     class BaseSuccess
@@ -75,27 +75,27 @@ namespace enki
       const char *mError = nullptr;
       size_t mNumBytes = 0;
     };
-  } // namespace details
+  } // namespace detail
 
   template <typename It>
     requires(concepts::ByteDataIterator<It> || std::same_as<It, void>)
   class Success;
 
   template <>
-  class Success<void> : public details::BaseSuccess<Success<void>>
+  class Success<void> : public detail::BaseSuccess<Success<void>>
   {
   private:
-    using Base_t = details::BaseSuccess<Success<void>>;
+    using Base_t = detail::BaseSuccess<Success<void>>;
 
   public:
     using Base_t::Base_t;
   };
 
   template <concepts::ByteDataIterator It>
-  class Success<It> : public details::BaseSuccess<Success<It>>
+  class Success<It> : public detail::BaseSuccess<Success<It>>
   {
   private:
-    using Base_t = details::BaseSuccess<Success<It>>;
+    using Base_t = detail::BaseSuccess<Success<It>>;
 
   public:
     constexpr Success() noexcept = default;

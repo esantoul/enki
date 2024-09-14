@@ -11,7 +11,7 @@ namespace enki
 {
   class AnyByteOutputIt;
 
-  namespace details
+  namespace detail
   {
     class ByteOutputItInterface
     {
@@ -44,7 +44,7 @@ namespace enki
 
       constexpr SpecializedByteOutputIt &operator=(std::byte val) final
       {
-        *mIt = static_cast<concepts::details::iterator_underlying_t<It>>(val);
+        *mIt = static_cast<concepts::detail::iterator_underlying_t<It>>(val);
         return *this;
       }
 
@@ -81,7 +81,7 @@ namespace enki
 
       constexpr RefByteOutputIt &operator=(std::byte val) final
       {
-        **mPIt = static_cast<concepts::details::iterator_underlying_t<It>>(val);
+        **mPIt = static_cast<concepts::detail::iterator_underlying_t<It>>(val);
         return *this;
       }
 
@@ -99,7 +99,7 @@ namespace enki
 
       It *mPIt;
     };
-  } // namespace details
+  } // namespace detail
 
   template <typename It>
   concept ByteDataOutputIteratorExceptSelf =
@@ -117,7 +117,7 @@ namespace enki
     static constexpr AnyByteOutputIt copy(It it)
     {
       AnyByteOutputIt ret;
-      ret.mPIt = new details::SpecializedByteOutputIt<It>(std::move(it));
+      ret.mPIt = new detail::SpecializedByteOutputIt<It>(std::move(it));
       return ret;
     }
 
@@ -125,7 +125,7 @@ namespace enki
     static constexpr AnyByteOutputIt ref(It &it)
     {
       AnyByteOutputIt ret;
-      ret.mPIt = new details::RefByteOutputIt<It>(it);
+      ret.mPIt = new detail::RefByteOutputIt<It>(it);
       return ret;
     }
 
@@ -179,12 +179,12 @@ namespace enki
   private:
     constexpr AnyByteOutputIt() = default;
 
-    details::ByteOutputItInterface *mPIt = nullptr;
+    detail::ByteOutputItInterface *mPIt = nullptr;
   };
 
   class AnyByteInputIt;
 
-  namespace details
+  namespace detail
   {
     class ByteInputItInterface
     {
@@ -240,7 +240,7 @@ namespace enki
       It mIt;
       mutable std::optional<std::byte> mCurrentValue{};
     };
-  } // namespace details
+  } // namespace detail
 
   template <typename It>
   concept ByteDataInputIteratorExceptSelf =
@@ -256,7 +256,7 @@ namespace enki
 
     template <ByteDataInputIteratorExceptSelf It>
     constexpr AnyByteInputIt(It it) :
-      mPIt(new details::SpecializedByteInputIt<It>(it))
+      mPIt(new detail::SpecializedByteInputIt<It>(it))
     {
     }
 
@@ -308,7 +308,7 @@ namespace enki
     }
 
   private:
-    details::ByteInputItInterface *mPIt = nullptr;
+    detail::ByteInputItInterface *mPIt = nullptr;
   };
 } // namespace enki
 

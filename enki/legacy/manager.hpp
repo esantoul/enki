@@ -13,10 +13,10 @@
 namespace enki
 {
   template <template <typename, typename, typename...> typename Container = std::unordered_map>
-  class Manager : public details::SerDesEngine<Manager<Container>>
+  class Manager : public detail::SerDesEngine<Manager<Container>>
   {
   private:
-    using ParentEngine = details::SerDesEngine<Manager<Container>>;
+    using ParentEngine = detail::SerDesEngine<Manager<Container>>;
 
   public:
     constexpr Manager() = default;

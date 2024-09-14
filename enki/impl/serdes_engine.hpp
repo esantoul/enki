@@ -16,7 +16,7 @@
 
 namespace enki
 {
-  namespace details
+  namespace detail
   {
     /**
      * @brief The CRTP Base class for custom SerDes
@@ -119,7 +119,7 @@ namespace enki
             in = r.get_iterator();
             res.update(r);
           }
-          using value_type = details::assignable_value_t<T>; // NOLINT
+          using value_type = detail::assignable_value_t<T>; // NOLINT
           value_type *temp = new value_type[numElements];
           if (std::all_of(temp, temp + numElements, [this, &res, &in](auto &v) {
                 auto r = static_cast<This_t>(this)->deserialize(v, in);
@@ -330,7 +330,7 @@ namespace enki
         return res;
       }
     };
-  } // namespace details
+  } // namespace detail
 } // namespace enki
 
 #endif // SERDES_ENGINE_HPP
