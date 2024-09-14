@@ -22,10 +22,7 @@ target_sources(enki_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/range_constructible_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/map_types_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/custom_type_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_requirements.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/manager_composite_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/manager_custom_type_register.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/manager_requirements.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/composite_serdes.cpp
 
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/any_byte_input_iter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/any_byte_output_iter.cpp
