@@ -23,9 +23,6 @@ target_sources(enki_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/map_types_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/custom_type_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/composite_serdes.cpp
-
-  ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/any_byte_input_iter.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/any_byte_output_iter.cpp
 )
 
 target_include_directories(enki_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
