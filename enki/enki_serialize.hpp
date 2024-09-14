@@ -8,15 +8,18 @@
 
 namespace enki
 {
-  namespace details
+  namespace detail
   {
     template <typename T, typename Writer>
     concept immediately_writeable = requires(Writer w, const T &v) {
       { w.write(v) } -> std::same_as<enki::Success<void>>;
     };
-  } // namespace details
 
-  template <typename Writer, typename T>
+    template <typename T, typename Writer, size_t... idx>
+    Success<void> serializeTupleLike(const T &value, Writer &&w, std::index_sequence<idx...>);
+  } // namespace detail
+
+  template <typename T, typename Writer>
   Success<void> serialize(const T &value, Writer &&w)
   {
     // All the logics for value decomposition is here
@@ -24,7 +27,7 @@ namespace enki
     // If the writer has a specialized `write` method
     // able to handle a value of type `T` it will be
     // used in priority
-    if constexpr (details::immediately_writeable<T, Writer>)
+    if constexpr (detail::immediately_writeable<T, Writer>)
     {
       return w.write(value);
     }
@@ -42,7 +45,10 @@ namespace enki
           ++i;
           if (isGood.update(serialize(std::forward<decltype(el)>(el), w)) && i != numElements)
           {
-            w.nextArrayElement();
+            if (!isGood.update(w.nextArrayElement()))
+            {
+              return false;
+            }
           }
           return static_cast<bool>(isGood);
         });
@@ -77,7 +83,10 @@ namespace enki
           isGood = serialize(std::forward<decltype(el)>(el), w);
           if (isGood && i != numElements)
           {
-            w.nextRangeElement();
+            if (!isGood.update(w.nextArrayElement()))
+            {
+              return false;
+            }
           }
           return static_cast<bool>(isGood);
         });
@@ -89,7 +98,7 @@ namespace enki
     }
     else if constexpr (concepts::tuple_like<T>)
     {
-      return serialize_tuple_like(value, w, std::make_index_sequence<std::tuple_size_v<T>>());
+      return detail::serializeTupleLike(value, w, std::make_index_sequence<std::tuple_size_v<T>>());
     }
     else if constexpr (concepts::custom_static_serializable<T>)
     {
@@ -103,6 +112,42 @@ namespace enki
 
     return {};
   }
+
+  namespace detail
+  {
+    template <typename T, typename Writer, size_t... idx>
+    Success<void> serializeTupleLike(const T &value, Writer &&writer, std::index_sequence<idx...>)
+    {
+      Success<void> ret = writer.arrayBegin();
+      if (!ret)
+      {
+        return ret;
+      }
+      size_t i = 0;
+      const auto serializeOne =
+        [](const auto &elem, Writer &&w, Success<void> &isGood, size_t &ii) {
+          ++ii;
+          if (isGood.update(serialize(elem, w)) && ii != sizeof...(idx))
+          {
+            if (!isGood.update(w.nextArrayElement()))
+            {
+              return false;
+            }
+          }
+
+          return static_cast<bool>(isGood);
+        };
+
+      (serializeOne(std::get<idx>(value), writer, ret, i) && ...);
+
+      if (ret)
+      {
+        ret.update(writer.arrayEnd());
+      }
+
+      return ret;
+    }
+  } // namespace detail
 } // namespace enki
 
 #endif // ENKI_ENKI_SERIALIZE_HPP

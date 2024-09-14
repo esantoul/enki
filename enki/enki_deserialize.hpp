@@ -9,23 +9,26 @@
 
 namespace enki
 {
-  namespace details
+  namespace detail
   {
     template <typename T, typename Reader>
     concept immediately_readable = requires(Reader r, T &v) {
       { r.read(v) } -> std::same_as<enki::Success<void>>;
     };
-  } // namespace details
 
-  template <typename Reader, typename T>
+    template <typename T, typename Reader, size_t... idx>
+    Success<void> deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>);
+  } // namespace detail
+
+  template <typename T, typename Reader>
   Success<void> deserialize(T &value, Reader &&r)
   {
     // All the logics for value decomposition is here
 
-    // If the writer has a specialized `write` method
+    // If the reader has a specialized `reader` method
     // able to handle a value of type `T` it will be
     // used in priority
-    if constexpr (details::immediately_readable<T, Reader>)
+    if constexpr (detail::immediately_readable<T, Reader>)
     {
       return r.read(value);
     }
@@ -42,7 +45,10 @@ namespace enki
         ++i;
         if (isGood.update(deserialize(std::forward<decltype(el)>(el), r)) && i != numElements)
         {
-          r.nextArrayElement();
+          if (!isGood.update(r.nextArrayElement()))
+          {
+            return false;
+          }
         }
         return static_cast<bool>(isGood);
       });
@@ -67,7 +73,10 @@ namespace enki
         isGood = deserialize(temp[i], r);
         if (isGood && i != numElements)
         {
-          r.nextRangeElement();
+          if (!isGood.update(r.nextRangeElement()))
+          {
+            return false;
+          }
         }
       }
       value = {std::begin(temp), std::end(temp)};
@@ -79,7 +88,8 @@ namespace enki
     }
     else if constexpr (concepts::tuple_like<T>)
     {
-      return deserialize_tuple_like(value, r, std::make_index_sequence<std::tuple_size_v<T>>());
+      return detail::deserializeTupleLike(
+        value, r, std::make_index_sequence<std::tuple_size_v<T>>());
     }
     else if constexpr (concepts::custom_static_serializable<T>)
     {
@@ -93,6 +103,41 @@ namespace enki
 
     return {};
   }
+
+  namespace detail
+  {
+    template <typename T, typename Reader, size_t... idx>
+    Success<void> deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>)
+    {
+      Success<void> ret = reader.arrayBegin();
+      if (!ret)
+      {
+        return ret;
+      }
+      size_t i = 0;
+      const auto deserializeOne = [](auto &elem, Reader &&w, Success<void> &isGood, size_t &ii) {
+        ++ii;
+        if (isGood.update(deserialize(elem, w)) && ii != sizeof...(idx))
+        {
+          if (!isGood.update(w.nextArrayElement()))
+          {
+            return false;
+          }
+        }
+
+        return static_cast<bool>(isGood);
+      };
+
+      (deserializeOne(std::get<idx>(value), reader, ret, i) && ...);
+
+      if (ret)
+      {
+        ret.update(reader.arrayEnd());
+      }
+
+      return ret;
+    }
+  } // namespace detail
 } // namespace enki
 
 #endif // ENKI_ENKI_DESERIALIZE_HPP
