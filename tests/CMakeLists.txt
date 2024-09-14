@@ -4,48 +4,31 @@ Include(FetchContent)
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.4.0
+  GIT_TAG        v3.7.0
 )
 FetchContent_MakeAvailable(Catch2)
 
-include(CTest)
-# enable_testing()
+add_executable(enki_tests)
 
-set(ENKI_TESTS_SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_arithmetic_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_array_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_composite_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_custom_type_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_enum_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_range_constructible_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_requirements.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/base_engine_tuple_like_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/manager_composite_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/manager_custom_type_register.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/manager_requirements.cpp
-
-  ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/any_byte_input_iter.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/any_byte_output_iter.cpp
+set_target_properties(enki_tests PROPERTIES
+  ${ENKI_COMMON_PROPERTIES}
 )
 
-add_executable(enki_tests ${ENKI_TESTS_SOURCES})
+target_sources(enki_tests PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/arithmetic_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/enum_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/array_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/tuple_like_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/range_constructible_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/map_types_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/custom_type_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/composite_serdes.cpp
+)
 
 target_include_directories(enki_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_compile_options(enki_tests PRIVATE
-  -Wall
-  -Wextra
-  -Wshadow
-  -Wnon-virtual-dtor
-  -pedantic
-
-  -Wold-style-cast
-  -Wcast-align
-  -Wunused
-  -Woverloaded-virtual
-  -Wnull-dereference
-
-  # -Weffc++
+  ${ENKI_COMMON_COMPILE_OPTIONS}
 
   -fsanitize=address
 )

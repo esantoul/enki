@@ -1,0 +1,14 @@
+
+#If:
+#  PathMatch: xxx/.*
+
+#CompileFlags:
+#  CompilationDatabase: build/xxx
+
+---
+
+# If:
+#  PathExclude: xxx/.*
+
+CompileFlags:
+  CompilationDatabase: build/

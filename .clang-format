@@ -1,0 +1,64 @@
+BasedOnStyle: LLVM
+IndentWidth: 2
+ColumnLimit: 100
+UseTab: Never
+
+Language: Cpp
+AccessModifierOffset: -2
+AllowAllParametersOfDeclarationOnNextLine: false
+AlignAfterOpenBracket: AlwaysBreak
+AlignArrayOfStructures: Right
+# AlignConsecutiveAssignments: AcrossComments
+# AlignConsecutiveBitFields: AcrossComments
+# AlignConsecutiveDeclarations: AcrossComments
+# AlignConsecutiveMacros: AcrossComments
+AllowShortBlocksOnASingleLine: Always
+AllowShortFunctionsOnASingleLine: false
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBraces: Custom
+BraceWrapping: {
+    'AfterCaseLabel': 'true'
+    'AfterClass': 'true'
+    'AfterControlStatement': 'true'
+    'AfterEnum': 'true'
+    'AfterExternBlock': 'false'
+    'AfterFunction': 'true'
+    'AfterNamespace': 'true'
+    'AfterObjCDeclaration': 'true'
+    'AfterStruct': 'true'
+    'AfterUnion': 'true'
+    'BeforeCatch': 'true'
+    'BeforeElse': 'true'
+    'BeforeLambdaBody': 'false'
+    'BeforeWhile' : 'false'
+    'IndentBraces': 'false'
+    'SplitEmptyFunction': 'true'
+    # 'SplitEmptyRecord': 'true'
+    # 'SplitEmptyNamespace': 'true'
+}
+BracedInitializerIndentWidth: 2
+BreakConstructorInitializers: AfterColon
+BreakInheritanceList: AfterColon
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 2
+ExperimentalAutoDetectBinPacking: false
+IncludeBlocks: Preserve
+IndentCaseLabels: true
+IndentExternBlock: Indent
+InsertBraces: true
+# FixNamespaceComments: true
+IntegerLiteralSeparator: {
+  'Binary': '4'
+  'BinaryMinDigits': '5'
+  'Decimal': '3'
+  'DecimalMinDigits': '7'
+  'Hex': '2',
+  'HexMinDigits': '5'
+}
+KeepEmptyLinesAtTheStartOfBlocks: false
+# LambdaBodyIndentation: Signature
+NamespaceIndentation: All
+PackConstructorInitializers: Never
+SeparateDefinitionBlocks: Always
