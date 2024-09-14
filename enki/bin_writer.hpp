@@ -18,8 +18,8 @@ namespace enki
     constexpr Success<void> write(const T &v)
     {
       const auto bytes = std::bit_cast<std::array<std::byte, sizeof(T)>>(v);
-      std::ranges::copy(bytes, std::back_inserter(mData));
-      return {};
+      std::copy(std::begin(bytes), std::end(bytes), std::back_inserter(mData));
+      return {sizeof(T)};
     }
 
     constexpr Success<void> arrayBegin() const
@@ -68,8 +68,7 @@ namespace enki
     template <concepts::arithmetic_or_enum T>
     constexpr Success<void> write(const T &)
     {
-      mSize += sizeof(T);
-      return {};
+      return {sizeof(T)};
     }
 
     constexpr Success<void> arrayBegin(size_t) const
@@ -101,14 +100,6 @@ namespace enki
     {
       return {};
     }
-
-    size_t size() const
-    {
-      return mSize;
-    }
-
-  private:
-    size_t mSize{};
   };
 } // namespace enki
 

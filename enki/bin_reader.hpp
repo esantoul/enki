@@ -24,7 +24,7 @@ namespace enki
     {
       std::memcpy(&v, mData.data() + mCurrentIndex, sizeof(T));
       mCurrentIndex += sizeof(T);
-      return {};
+      return {sizeof(T)};
     }
 
     constexpr Success<void> arrayBegin() const

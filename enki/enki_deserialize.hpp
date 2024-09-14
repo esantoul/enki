@@ -18,7 +18,7 @@ namespace enki
   } // namespace details
 
   template <typename Reader, typename T>
-  Success<void> deserialize(T &value, Reader &r)
+  Success<void> deserialize(T &value, Reader &&r)
   {
     // All the logics for value decomposition is here
 
@@ -38,19 +38,17 @@ namespace enki
         return isGood;
       }
       size_t i = 0;
-      std::all_of(
-        std::begin(value), std::end(value), [numElements, &i, &r, &isGood](const auto &el) {
-          ++i;
-          isGood = deserialize(std::forward<decltype(el)>(el), r);
-          if (isGood && i != numElements)
-          {
-            r.nextArrayElement();
-          }
-          return static_cast<bool>(isGood);
-        });
+      std::all_of(std::begin(value), std::end(value), [numElements, &i, &r, &isGood](auto &el) {
+        ++i;
+        if (isGood.update(deserialize(std::forward<decltype(el)>(el), r)) && i != numElements)
+        {
+          r.nextArrayElement();
+        }
+        return static_cast<bool>(isGood);
+      });
       if (isGood)
       {
-        isGood = r.arrayEnd();
+        isGood.update(r.arrayEnd());
       }
       return isGood;
     }

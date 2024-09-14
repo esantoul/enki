@@ -17,7 +17,7 @@ namespace enki
   } // namespace details
 
   template <typename Writer, typename T>
-  Success<void> serialize(const T &value, Writer &w)
+  Success<void> serialize(const T &value, Writer &&w)
   {
     // All the logics for value decomposition is here
 
@@ -31,7 +31,7 @@ namespace enki
     else if constexpr (concepts::array_like<T>)
     {
       const size_t numElements = std::size(value);
-      Success<void> isGood = w.arrayBegin(numElements);
+      Success<void> isGood = w.arrayBegin();
       if (!isGood)
       {
         return isGood;
@@ -40,8 +40,7 @@ namespace enki
       std::all_of(
         std::begin(value), std::end(value), [numElements, &i, &w, &isGood](const auto &el) {
           ++i;
-          isGood = serialize(std::forward<decltype(el)>(el), w);
-          if (isGood && i != numElements)
+          if (isGood.update(serialize(std::forward<decltype(el)>(el), w)) && i != numElements)
           {
             w.nextArrayElement();
           }
@@ -49,7 +48,7 @@ namespace enki
         });
       if (isGood)
       {
-        isGood = w.arrayEnd();
+        isGood.update(w.arrayEnd());
       }
       return isGood;
     }
