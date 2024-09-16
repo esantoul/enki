@@ -104,6 +104,11 @@ namespace enki
     }
     else
     {
+      static_assert(
+        !sizeof(T) /* Always evaluate to false but is only compiled if this branch is
+                      effectively instantiated */
+        ,
+        "Cannot deserialize value");
       return "Cannot deserialize value";
     }
 
