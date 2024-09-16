@@ -18,14 +18,15 @@ namespace enki
     };
 
     template <typename T, typename Reader, size_t... idx>
-    Success<void> deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>);
+    constexpr Success<void>
+    deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>);
 
     template <typename T, typename Reader, size_t... idx>
-    Success<void> deserializeCustom(T &value, Reader &&w, std::index_sequence<idx...>);
+    constexpr Success<void> deserializeCustom(T &value, Reader &&w, std::index_sequence<idx...>);
   } // namespace detail
 
   template <typename T, typename Reader>
-  Success<void> deserialize(T &value, Reader &&r)
+  constexpr Success<void> deserialize(T &value, Reader &&r)
   {
     // All the logics for value decomposition is here
 
@@ -112,7 +113,8 @@ namespace enki
   namespace detail
   {
     template <typename T, typename Reader, size_t... idx>
-    Success<void> deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>)
+    constexpr Success<void>
+    deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>)
     {
       Success<void> ret = reader.arrayBegin();
       if (!ret)
@@ -182,7 +184,8 @@ namespace enki
     }
 
     template <typename T, typename Reader, size_t... idx>
-    Success<void> deserializeCustom(T &value, Reader &&reader, std::index_sequence<idx...>)
+    constexpr Success<void>
+    deserializeCustom(T &value, Reader &&reader, std::index_sequence<idx...>)
     {
       Success<void> ret = reader.arrayBegin();
       if (!ret)

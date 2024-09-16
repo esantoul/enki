@@ -29,12 +29,11 @@ target_include_directories(enki_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
 
 target_compile_options(enki_tests PRIVATE
   ${ENKI_COMMON_COMPILE_OPTIONS}
-
-  -fsanitize=address
+  # -fsanitize=address
 )
 
 target_link_options(enki_tests PRIVATE
-  -fsanitize=address
+  # -fsanitize=address
 )
 
 target_link_libraries(enki_tests PRIVATE

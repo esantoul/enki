@@ -20,7 +20,7 @@ namespace
     std::vector<double> numbers;
     uint32_t timestamp;
 
-    constexpr auto operator<=>(const S &) const noexcept = default;
+    auto operator<=>(const S &) const noexcept = default;
 
     struct EnkiSerial
     {

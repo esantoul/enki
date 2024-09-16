@@ -16,14 +16,16 @@ namespace enki
     };
 
     template <typename T, typename Writer, size_t... idx>
-    Success<void> serializeTupleLike(const T &value, Writer &&w, std::index_sequence<idx...>);
+    constexpr Success<void>
+    serializeTupleLike(const T &value, Writer &&w, std::index_sequence<idx...>);
 
     template <typename T, typename Writer, size_t... idx>
-    Success<void> serializeCustom(const T &value, Writer &&w, std::index_sequence<idx...>);
+    constexpr Success<void>
+    serializeCustom(const T &value, Writer &&w, std::index_sequence<idx...>);
   } // namespace detail
 
   template <typename T, typename Writer>
-  Success<void> serialize(const T &value, Writer &&w)
+  constexpr Success<void> serialize(const T &value, Writer &&w)
   {
     // All the logics for value decomposition is here
 
@@ -118,7 +120,8 @@ namespace enki
   namespace detail
   {
     template <typename T, typename Writer, size_t... idx>
-    Success<void> serializeTupleLike(const T &value, Writer &&writer, std::index_sequence<idx...>)
+    constexpr Success<void>
+    serializeTupleLike(const T &value, Writer &&writer, std::index_sequence<idx...>)
     {
       Success<void> ret = writer.arrayBegin();
       if (!ret)
@@ -182,7 +185,8 @@ namespace enki
     }
 
     template <typename T, typename Writer, size_t... idx>
-    Success<void> serializeCustom(const T &value, Writer &&writer, std::index_sequence<idx...>)
+    constexpr Success<void>
+    serializeCustom(const T &value, Writer &&writer, std::index_sequence<idx...>)
     {
       Success<void> ret = writer.arrayBegin();
       if (!ret)
