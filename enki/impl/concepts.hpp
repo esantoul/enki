@@ -63,6 +63,7 @@ namespace enki::concepts
                             typename T::value_type;
                             t.operator bool();
                             { t.value() } -> std::convertible_to<typename T::value_type>;
+                            { *t } -> std::convertible_to<typename T::value_type>;
                           };
 
   namespace detail

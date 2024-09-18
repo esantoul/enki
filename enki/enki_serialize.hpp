@@ -104,6 +104,19 @@ namespace enki
     {
       return detail::serializeTupleLike(value, w, std::make_index_sequence<std::tuple_size_v<T>>());
     }
+    else if constexpr (concepts::optional_like<T>)
+    {
+      Success<void> isGood = serialize(static_cast<bool>(value), w);
+      if (!isGood)
+      {
+        return isGood;
+      }
+      if (value)
+      {
+        isGood.update(serialize(*value, w));
+      }
+      return isGood;
+    }
     else if constexpr (concepts::custom_static_serializable<T>)
     {
       return detail::serializeCustom(

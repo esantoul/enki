@@ -97,6 +97,24 @@ namespace enki
       return detail::deserializeTupleLike(
         value, r, std::make_index_sequence<std::tuple_size_v<T>>());
     }
+    else if constexpr (concepts::optional_like<T>)
+    {
+      bool active = false;
+      Success<void> isGood = deserialize(active, r);
+      if (!isGood)
+      {
+        return isGood;
+      }
+      if (active)
+      {
+        typename T::value_type deserializedValue;
+        if (isGood.update(deserialize(deserializedValue, r)))
+        {
+          value = std::move(deserializedValue);
+        }
+      }
+      return isGood;
+    }
     else if constexpr (concepts::custom_static_serializable<T>)
     {
       return detail::deserializeCustom(

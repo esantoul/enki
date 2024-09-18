@@ -19,6 +19,7 @@ target_sources(enki_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/enum_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/array_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/tuple_like_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/optional_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/range_constructible_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/map_types_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/custom_type_serdes.cpp
