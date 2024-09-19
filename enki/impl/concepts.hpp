@@ -82,46 +82,6 @@ namespace enki::concepts
     std::variant_size_v<T>;
     detail::allVariantIndexesGood<T>(std::make_index_sequence<std::variant_size_v<T>>());
   } && detail::allVariantIndexesGood<T>(std::make_index_sequence<std::variant_size_v<T>>());
-
-  namespace detail
-  {
-    template <typename It>
-    struct IteratorUnderlying
-    {
-      using value_type = typename std::iterator_traits<It>::value_type; // NOLINT
-    };
-
-    template <typename It>
-      requires requires { typename It::container_type; }
-    struct IteratorUnderlying<It>
-    {
-      using value_type = typename It::container_type::value_type; // NOLINT
-    };
-
-    template <typename It>
-      requires requires { typename It::enki_value_type; }
-    struct IteratorUnderlying<It>
-    {
-      using value_type = typename It::enki_value_type; // NOLINT
-    };
-
-    template <typename It>
-    using iterator_underlying_t = typename IteratorUnderlying<It>::value_type; // NOLINT
-  } // namespace detail
-
-  template <typename It>
-  concept ByteDataOutputIterator =
-    std::input_or_output_iterator<It> && (sizeof(detail::iterator_underlying_t<It>) == 1) &&
-    requires(It it) { *it = static_cast<detail::iterator_underlying_t<It>>(std::byte{}); } &&
-    requires(It it, It it2) { it2 = it; };
-
-  template <typename It>
-  concept ByteDataInputIterator =
-    std::input_iterator<It> && (sizeof(detail::iterator_underlying_t<It>) == 1) &&
-    requires(It it) { static_cast<std::byte>(*it); } && requires(It it, It it2) { it2 = it; };
-
-  template <typename It>
-  concept ByteDataIterator = ByteDataInputIterator<It> || ByteDataOutputIterator<It>;
 } // namespace enki::concepts
 
 namespace enki
@@ -174,11 +134,6 @@ namespace enki::concepts
     (std::tuple_size_v<decltype(T::EnkiSerial::members)> >= 1) &&
     detail::isTupleOfClassMembers<T>(
       std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
-
-  template <typename T>
-  concept BasicSerializable =
-    arithmetic_or_enum<T> || array_like<T> || range_constructible_container<T> || tuple_like<T> ||
-    custom_static_serializable<T>;
 } // namespace enki::concepts
 
 #endif // ENKI_CONCEPTS_HPP

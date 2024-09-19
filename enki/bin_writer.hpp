@@ -17,39 +17,39 @@ namespace enki
     using size_type = SizeType; // NOLINT
 
     template <concepts::arithmetic_or_enum T>
-    constexpr Success<void> write(const T &v)
+    constexpr Success write(const T &v)
     {
       const auto bytes = std::bit_cast<std::array<std::byte, sizeof(T)>>(v);
       std::copy(std::begin(bytes), std::end(bytes), std::back_inserter(mData));
       return {sizeof(T)};
     }
 
-    constexpr Success<void> arrayBegin() const
+    constexpr Success arrayBegin() const
     {
       return {};
     }
 
-    constexpr Success<void> arrayEnd() const
+    constexpr Success arrayEnd() const
     {
       return {};
     }
 
-    constexpr Success<void> nextArrayElement() const
+    constexpr Success nextArrayElement() const
     {
       return {};
     }
 
-    constexpr Success<void> rangeBegin(size_t numElements)
+    constexpr Success rangeBegin(size_t numElements)
     {
       return write(static_cast<SizeType>(numElements));
     }
 
-    constexpr Success<void> rangeEnd() const
+    constexpr Success rangeEnd() const
     {
       return {};
     }
 
-    constexpr Success<void> nextRangeElement() const
+    constexpr Success nextRangeElement() const
     {
       return {};
     }
@@ -68,37 +68,37 @@ namespace enki
   {
   public:
     template <concepts::arithmetic_or_enum T>
-    constexpr Success<void> write(const T &)
+    constexpr Success write(const T &)
     {
       return {sizeof(T)};
     }
 
-    constexpr Success<void> arrayBegin(size_t) const
+    constexpr Success arrayBegin(size_t) const
     {
       return {};
     }
 
-    constexpr Success<void> arrayEnd() const
+    constexpr Success arrayEnd() const
     {
       return {};
     }
 
-    constexpr Success<void> nextArrayElement() const
+    constexpr Success nextArrayElement() const
     {
       return {};
     }
 
-    constexpr Success<void> rangeBegin(size_t numElements)
+    constexpr Success rangeBegin(size_t numElements)
     {
       return write(static_cast<SizeType>(numElements));
     }
 
-    constexpr Success<void> rangeEnd() const
+    constexpr Success rangeEnd() const
     {
       return {};
     }
 
-    constexpr Success<void> nextRangeElement() const
+    constexpr Success nextRangeElement() const
     {
       return {};
     }

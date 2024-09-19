@@ -14,18 +14,17 @@ namespace enki
   {
     template <typename T, typename Reader>
     concept immediately_readable = requires(Reader r, T &v) {
-      { r.read(v) } -> std::same_as<enki::Success<void>>;
+      { r.read(v) } -> std::same_as<enki::Success>;
     };
 
     template <typename T, typename Reader, size_t... idx>
-    constexpr Success<void>
-    deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>);
+    constexpr Success deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>);
 
     template <typename T, typename Reader, size_t... idx>
-    constexpr Success<void> deserializeCustom(T &value, Reader &&r, std::index_sequence<idx...>);
+    constexpr Success deserializeCustom(T &value, Reader &&r, std::index_sequence<idx...>);
 
     template <typename T, typename Reader, size_t... idx>
-    constexpr Success<void> deserializeVariantLike(
+    constexpr Success deserializeVariantLike(
       T &value,
       Reader &&r,
       size_t alternativeIndex,
@@ -33,7 +32,7 @@ namespace enki
   } // namespace detail
 
   template <typename T, typename Reader>
-  constexpr Success<void> deserialize(T &value, Reader &&r)
+  constexpr Success deserialize(T &value, Reader &&r)
   {
     // All the logics for value decomposition is here
 
@@ -47,7 +46,7 @@ namespace enki
     else if constexpr (concepts::array_like<T>)
     {
       const size_t numElements = std::size(value);
-      Success<void> isGood = r.arrayBegin();
+      Success isGood = r.arrayBegin();
       if (!isGood)
       {
         return isGood;
@@ -72,7 +71,7 @@ namespace enki
     }
     else if constexpr (concepts::range_constructible_container<T>)
     {
-      Success<void> isGood;
+      Success isGood;
       size_t numElements = 0;
       isGood = r.rangeBegin(numElements);
       if (!isGood)
@@ -107,7 +106,7 @@ namespace enki
     else if constexpr (concepts::optional_like<T>)
     {
       bool active = false;
-      Success<void> isGood = deserialize(active, r);
+      Success isGood = deserialize(active, r);
       if (!isGood)
       {
         return isGood;
@@ -130,7 +129,7 @@ namespace enki
     {
       typename Reader::size_type index = -1;
 
-      Success<void> isGood = deserialize(index, r);
+      Success isGood = deserialize(index, r);
       if (!isGood)
       {
         return isGood;
@@ -167,16 +166,15 @@ namespace enki
   namespace detail
   {
     template <typename T, typename Reader, size_t... idx>
-    constexpr Success<void>
-    deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>)
+    constexpr Success deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>)
     {
-      Success<void> ret = reader.arrayBegin();
+      Success ret = reader.arrayBegin();
       if (!ret)
       {
         return ret;
       }
       size_t i = 0;
-      const auto deserializeOne = [](auto &elem, Reader &&w, Success<void> &isGood, size_t &ii) {
+      const auto deserializeOne = [](auto &elem, Reader &&w, Success &isGood, size_t &ii) {
         ++ii;
         if (isGood.update(deserialize(elem, w)) && ii != sizeof...(idx))
         {
@@ -200,8 +198,7 @@ namespace enki
     }
 
     template <auto member, concepts::custom_static_serializable T, typename Reader>
-    constexpr bool
-    deserializeOneCustom(T &inst, Reader &&reader, Success<void> &isGood, bool isLast)
+    constexpr bool deserializeOneCustom(T &inst, Reader &&reader, Success &isGood, bool isLast)
     {
       if (isGood.update(deserialize(inst.*member, reader)) && !isLast)
       {
@@ -216,8 +213,7 @@ namespace enki
 
     template <auto member, concepts::custom_static_serializable T, typename Reader>
       requires concepts::proper_member_wrapper<T, decltype(member)>
-    constexpr bool
-    deserializeOneCustom(T &inst, Reader &&reader, Success<void> &isGood, bool isLast)
+    constexpr bool deserializeOneCustom(T &inst, Reader &&reader, Success &isGood, bool isLast)
     {
       typename decltype(member)::value_type temp{};
       if (!isGood.update(deserialize(temp, reader)))
@@ -238,10 +234,9 @@ namespace enki
     }
 
     template <typename T, typename Reader, size_t... idx>
-    constexpr Success<void>
-    deserializeCustom(T &value, Reader &&reader, std::index_sequence<idx...>)
+    constexpr Success deserializeCustom(T &value, Reader &&reader, std::index_sequence<idx...>)
     {
-      Success<void> ret = reader.arrayBegin();
+      Success ret = reader.arrayBegin();
       if (!ret)
       {
         return ret;
@@ -264,7 +259,7 @@ namespace enki
     struct AlternativeDeserializer
     {
       template <typename T, typename Reader>
-      constexpr bool operator()(T &value, Reader &&r, bool isCorrectType, Success<void> &isGood)
+      constexpr bool operator()(T &value, Reader &&r, bool isCorrectType, Success &isGood)
       {
         if (!isCorrectType)
         {
@@ -283,7 +278,7 @@ namespace enki
     struct AlternativeDeserializer<std::monostate>
     {
       template <typename T, typename Reader>
-      constexpr bool operator()(T &value, Reader &&, bool isCorrectType, Success<void> &)
+      constexpr bool operator()(T &value, Reader &&, bool isCorrectType, Success &)
       {
         if (!isCorrectType)
         {
@@ -295,13 +290,13 @@ namespace enki
     };
 
     template <typename T, typename Reader, size_t... idx>
-    constexpr Success<void> deserializeVariantLike(
+    constexpr Success deserializeVariantLike(
       T &value,
       Reader &&r,
       size_t alternativeIndex,
       std::index_sequence<idx...>)
     {
-      Success<void> isGood;
+      Success isGood;
       (AlternativeDeserializer<std::variant_alternative_t<idx, T>>{}(
          value, r, idx == alternativeIndex, isGood) ||
        ...);

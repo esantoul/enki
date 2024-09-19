@@ -13,16 +13,14 @@ namespace enki
   {
     template <typename T, typename Writer>
     concept immediately_writeable = requires(Writer w, const T &v) {
-      { w.write(v) } -> std::same_as<enki::Success<void>>;
+      { w.write(v) } -> std::same_as<enki::Success>;
     };
 
     template <typename T, typename Writer, size_t... idx>
-    constexpr Success<void>
-    serializeTupleLike(const T &value, Writer &&w, std::index_sequence<idx...>);
+    constexpr Success serializeTupleLike(const T &value, Writer &&w, std::index_sequence<idx...>);
 
     template <typename T, typename Writer, size_t... idx>
-    constexpr Success<void>
-    serializeCustom(const T &value, Writer &&w, std::index_sequence<idx...>);
+    constexpr Success serializeCustom(const T &value, Writer &&w, std::index_sequence<idx...>);
 
     template <typename... Functors>
     struct Overloaded : Functors...
@@ -32,7 +30,7 @@ namespace enki
   } // namespace detail
 
   template <typename T, typename Writer>
-  constexpr Success<void> serialize(const T &value, Writer &&w)
+  constexpr Success serialize(const T &value, Writer &&w)
   {
     // All the logics for value decomposition is here
 
@@ -46,7 +44,7 @@ namespace enki
     else if constexpr (concepts::array_like<T>)
     {
       const size_t numElements = std::size(value);
-      Success<void> isGood = w.arrayBegin();
+      Success isGood = w.arrayBegin();
       if (!isGood)
       {
         return isGood;
@@ -72,7 +70,7 @@ namespace enki
     }
     else if constexpr (concepts::range_constructible_container<T>)
     {
-      Success<void> isGood;
+      Success isGood;
       const size_t numElements = [](const T &v) {
         if constexpr (requires { std::size(v); })
         {
@@ -113,7 +111,7 @@ namespace enki
     }
     else if constexpr (concepts::optional_like<T>)
     {
-      Success<void> isGood = serialize(static_cast<bool>(value), w);
+      Success isGood = serialize(static_cast<bool>(value), w);
       if (!isGood)
       {
         return isGood;
@@ -138,7 +136,7 @@ namespace enki
         return "Variant cannot be serialized because it is in invalid state";
       }
 
-      Success<void> isGood = serialize(static_cast<SizeType>(value.index()), w);
+      Success isGood = serialize(static_cast<SizeType>(value.index()), w);
       if (!isGood)
       {
         return isGood;
@@ -173,28 +171,27 @@ namespace enki
   namespace detail
   {
     template <typename T, typename Writer, size_t... idx>
-    constexpr Success<void>
+    constexpr Success
     serializeTupleLike(const T &value, Writer &&writer, std::index_sequence<idx...>)
     {
-      Success<void> ret = writer.arrayBegin();
+      Success ret = writer.arrayBegin();
       if (!ret)
       {
         return ret;
       }
       size_t i = 0;
-      const auto serializeOne =
-        [](const auto &elem, Writer &&w, Success<void> &isGood, size_t &ii) {
-          ++ii;
-          if (isGood.update(serialize(elem, w)) && ii != sizeof...(idx))
+      const auto serializeOne = [](const auto &elem, Writer &&w, Success &isGood, size_t &ii) {
+        ++ii;
+        if (isGood.update(serialize(elem, w)) && ii != sizeof...(idx))
+        {
+          if (!isGood.update(w.nextArrayElement()))
           {
-            if (!isGood.update(w.nextArrayElement()))
-            {
-              return false;
-            }
+            return false;
           }
+        }
 
-          return static_cast<bool>(isGood);
-        };
+        return static_cast<bool>(isGood);
+      };
 
       (serializeOne(std::get<idx>(value), writer, ret, i) && ...);
 
@@ -207,8 +204,7 @@ namespace enki
     }
 
     template <auto member, concepts::custom_static_serializable T, typename Writer>
-    constexpr bool
-    serializeOneCustom(const T &inst, Writer &&writer, Success<void> &isGood, bool isLast)
+    constexpr bool serializeOneCustom(const T &inst, Writer &&writer, Success &isGood, bool isLast)
     {
       if (isGood.update(serialize(inst.*member, writer)) && !isLast)
       {
@@ -223,8 +219,7 @@ namespace enki
 
     template <auto member, concepts::custom_static_serializable T, typename Writer>
       requires concepts::proper_member_wrapper<T, decltype(member)>
-    constexpr bool
-    serializeOneCustom(const T &inst, Writer &&writer, Success<void> &isGood, bool isLast)
+    constexpr bool serializeOneCustom(const T &inst, Writer &&writer, Success &isGood, bool isLast)
     {
       if (isGood.update(serialize(member.getter(inst), writer)) && !isLast)
       {
@@ -238,10 +233,9 @@ namespace enki
     }
 
     template <typename T, typename Writer, size_t... idx>
-    constexpr Success<void>
-    serializeCustom(const T &value, Writer &&writer, std::index_sequence<idx...>)
+    constexpr Success serializeCustom(const T &value, Writer &&writer, std::index_sequence<idx...>)
     {
-      Success<void> ret = writer.arrayBegin();
+      Success ret = writer.arrayBegin();
       if (!ret)
       {
         return ret;

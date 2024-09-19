@@ -22,29 +22,29 @@ namespace enki
     }
 
     template <concepts::arithmetic_or_enum T>
-    constexpr Success<void> read(T &v)
+    constexpr Success read(T &v)
     {
       std::memcpy(&v, mData.data() + mCurrentIndex, sizeof(T));
       mCurrentIndex += sizeof(T);
       return {sizeof(T)};
     }
 
-    constexpr Success<void> arrayBegin() const
+    constexpr Success arrayBegin() const
     {
       return {};
     }
 
-    constexpr Success<void> arrayEnd() const
+    constexpr Success arrayEnd() const
     {
       return {};
     }
 
-    constexpr Success<void> nextArrayElement() const
+    constexpr Success nextArrayElement() const
     {
       return {};
     }
 
-    constexpr Success<void> rangeBegin(size_t &numElements)
+    constexpr Success rangeBegin(size_t &numElements)
     {
       SizeType temp{};
       auto ret = read(temp);
@@ -52,12 +52,12 @@ namespace enki
       return ret;
     }
 
-    constexpr Success<void> rangeEnd() const
+    constexpr Success rangeEnd() const
     {
       return {};
     }
 
-    constexpr Success<void> nextRangeElement() const
+    constexpr Success nextRangeElement() const
     {
       return {};
     }

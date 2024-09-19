@@ -156,7 +156,7 @@ namespace
   {
     using enki::BinWriter<>::write;
 
-    constexpr enki::Success<void> write(const MyStruct &v)
+    constexpr enki::Success write(const MyStruct &v)
     {
       const auto &[a, b, c, d, value] = v;
       return enki::serialize(std::tie(a, b, c, d, value), *this);
@@ -168,7 +168,7 @@ namespace
     using enki::BinReader<>::BinReader;
     using enki::BinReader<>::read;
 
-    constexpr enki::Success<void> read(MyStruct &v)
+    constexpr enki::Success read(MyStruct &v)
     {
       std::tuple<uint8_t, uint8_t, uint8_t, uint8_t, uint8_t> data;
       auto ret = enki::deserialize(data, *this);

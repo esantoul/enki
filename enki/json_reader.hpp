@@ -20,7 +20,7 @@ namespace enki
     }
 
     template <concepts::arithmetic_or_enum T>
-    constexpr Success<void> read(T &v)
+    constexpr Success read(T &v)
     {
       if constexpr (sizeof(T) == 1)
       {
@@ -35,34 +35,34 @@ namespace enki
       return {};
     }
 
-    constexpr Success<void> read(std::string &str)
+    constexpr Success read(std::string &str)
     {
       mStream >> std::quoted(str);
       return {};
     }
 
-    constexpr Success<void> arrayBegin()
+    constexpr Success arrayBegin()
     {
       char junk{};
       mStream >> junk;
       return {};
     }
 
-    constexpr Success<void> arrayEnd()
+    constexpr Success arrayEnd()
     {
       char junk{};
       mStream >> junk;
       return {};
     }
 
-    constexpr Success<void> nextArrayElement()
+    constexpr Success nextArrayElement()
     {
       char junk{};
       mStream >> junk;
       return {};
     }
 
-    constexpr Success<void> rangeBegin(size_t &numElements)
+    constexpr Success rangeBegin(size_t &numElements)
     {
       char junk{};
       mStream >> junk >> numElements;
@@ -73,14 +73,14 @@ namespace enki
       return {};
     }
 
-    constexpr Success<void> rangeEnd()
+    constexpr Success rangeEnd()
     {
       char junk{};
       mStream >> junk;
       return {};
     }
 
-    constexpr Success<void> nextRangeElement()
+    constexpr Success nextRangeElement()
     {
       char junk{};
       mStream >> junk;
