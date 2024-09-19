@@ -260,21 +260,39 @@ namespace enki
       return ret;
     }
 
-    template <typename Alternative, typename T, typename Reader>
-    constexpr bool
-    deserializeVariantAlternative(T &value, Reader &&r, bool isCorrectType, Success<void> &isGood)
+    template <typename Alternative>
+    struct AlternativeDeserializer
     {
-      if (!isCorrectType)
+      template <typename T, typename Reader>
+      constexpr bool operator()(T &value, Reader &&r, bool isCorrectType, Success<void> &isGood)
       {
-        return false;
+        if (!isCorrectType)
+        {
+          return false;
+        }
+        Alternative toDeserialize;
+        if (isGood.update(deserialize(toDeserialize, r)))
+        {
+          value = std::move(toDeserialize);
+        }
+        return true;
       }
-      Alternative toDeserialize;
-      if (isGood.update(deserialize(toDeserialize, r)))
+    };
+
+    template <>
+    struct AlternativeDeserializer<std::monostate>
+    {
+      template <typename T, typename Reader>
+      constexpr bool operator()(T &value, Reader &&, bool isCorrectType, Success<void> &)
       {
-        value = std::move(toDeserialize);
+        if (!isCorrectType)
+        {
+          return false;
+        }
+        value = std::monostate{};
+        return true;
       }
-      return true;
-    }
+    };
 
     template <typename T, typename Reader, size_t... idx>
     constexpr Success<void> deserializeVariantLike(
@@ -284,7 +302,7 @@ namespace enki
       std::index_sequence<idx...>)
     {
       Success<void> isGood;
-      (deserializeVariantAlternative<std::variant_alternative_t<idx, T>>(
+      (AlternativeDeserializer<std::variant_alternative_t<idx, T>>{}(
          value, r, idx == alternativeIndex, isGood) ||
        ...);
       return isGood;

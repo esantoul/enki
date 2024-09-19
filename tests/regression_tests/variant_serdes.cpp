@@ -23,3 +23,21 @@ TEST_CASE("Variant SerDes", "[regression]")
 
   REQUIRE(deserializedValue == kValueToSerialize);
 }
+
+TEST_CASE("Variant (std::monostate) SerDes", "[regression]")
+{
+  enki::BinWriter writer;
+
+  static constexpr std::variant<char, double, float, std::monostate> kValueToSerialize =
+    std::monostate{};
+  const auto serRes = enki::serialize(kValueToSerialize, writer);
+  REQUIRE_NOTHROW(serRes.or_throw());
+  REQUIRE(serRes.size() == sizeof(enki::BinWriter<>::size_type));
+
+  std::remove_cvref_t<decltype(kValueToSerialize)> deserializedValue;
+  const auto desRes = enki::deserialize(deserializedValue, enki::BinReader(writer.data()));
+  REQUIRE_NOTHROW(desRes.or_throw());
+  REQUIRE(desRes.size() == sizeof(enki::BinWriter<>::size_type));
+
+  REQUIRE(deserializedValue == kValueToSerialize);
+}

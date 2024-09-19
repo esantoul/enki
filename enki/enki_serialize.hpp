@@ -23,6 +23,12 @@ namespace enki
     template <typename T, typename Writer, size_t... idx>
     constexpr Success<void>
     serializeCustom(const T &value, Writer &&w, std::index_sequence<idx...>);
+
+    template <typename... Functors>
+    struct Overloaded : Functors...
+    {
+      using Functors::operator()...;
+    };
   } // namespace detail
 
   template <typename T, typename Writer>
@@ -127,12 +133,23 @@ namespace enki
         return "Variant index is too large to be serialized";
       }
 
+      if (value.index() >= std::variant_size_v<T>)
+      {
+        return "Variant cannot be serialized because it is in invalid state";
+      }
+
       Success<void> isGood = serialize(static_cast<SizeType>(value.index()), w);
       if (!isGood)
       {
         return isGood;
       }
-      std::visit([&isGood, &w](const auto &v) { isGood.update(serialize(v, w)); }, value);
+
+      std::visit(
+        detail::Overloaded(
+          [](const std::monostate &) {},
+          [&isGood, &w](const auto &v) { isGood.update(serialize(v, w)); }),
+        value);
+
       return isGood;
     }
     else if constexpr (concepts::custom_static_serializable<T>)
