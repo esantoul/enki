@@ -14,12 +14,12 @@ TEST_CASE("Variant SerDes", "[regression]")
   static constexpr std::variant<char, double, float, int> kValueToSerialize = 3.14;
   const auto serRes = enki::serialize(kValueToSerialize, writer);
   REQUIRE_NOTHROW(serRes.or_throw());
-  REQUIRE(serRes.size() == sizeof(size_t) + sizeof(double));
+  REQUIRE(serRes.size() == sizeof(enki::BinWriter<>::size_type) + sizeof(double));
 
   std::remove_cvref_t<decltype(kValueToSerialize)> deserializedValue;
   const auto desRes = enki::deserialize(deserializedValue, enki::BinReader(writer.data()));
   REQUIRE_NOTHROW(desRes.or_throw());
-  REQUIRE(desRes.size() == sizeof(size_t) + sizeof(double));
+  REQUIRE(desRes.size() == sizeof(enki::BinWriter<>::size_type) + sizeof(double));
 
   REQUIRE(deserializedValue == kValueToSerialize);
 }

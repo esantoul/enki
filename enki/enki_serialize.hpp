@@ -2,6 +2,7 @@
 #define ENKI_ENKI_SERIALIZE_HPP
 
 #include <algorithm>
+#include <limits>
 
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/success.hpp"
@@ -119,7 +120,14 @@ namespace enki
     }
     else if constexpr (concepts::variant_like<T>)
     {
-      Success<void> isGood = serialize(value.index(), w);
+      using SizeType = typename std::remove_cvref_t<Writer>::size_type;
+
+      if (value.index() > std::numeric_limits<SizeType>::max())
+      {
+        return "Variant index is too large to be serialized";
+      }
+
+      Success<void> isGood = serialize(static_cast<SizeType>(value.index()), w);
       if (!isGood)
       {
         return isGood;

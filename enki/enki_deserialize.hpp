@@ -128,11 +128,17 @@ namespace enki
     }
     else if constexpr (concepts::variant_like<T>)
     {
-      size_t index = std::variant_npos;
+      typename Reader::size_type index = -1;
+
       Success<void> isGood = deserialize(index, r);
       if (!isGood)
       {
         return isGood;
+      }
+
+      if (index >= std::variant_size_v<T>)
+      {
+        return isGood.update("Deserialized variant index is out of range");
       }
 
       isGood.update(detail::deserializeVariantLike(
