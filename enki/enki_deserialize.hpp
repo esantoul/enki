@@ -22,7 +22,14 @@ namespace enki
     deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>);
 
     template <typename T, typename Reader, size_t... idx>
-    constexpr Success<void> deserializeCustom(T &value, Reader &&w, std::index_sequence<idx...>);
+    constexpr Success<void> deserializeCustom(T &value, Reader &&r, std::index_sequence<idx...>);
+
+    template <typename T, typename Reader, size_t... idx>
+    constexpr Success<void> deserializeVariantLike(
+      T &value,
+      Reader &&r,
+      size_t alternativeIndex,
+      std::index_sequence<idx...>);
   } // namespace detail
 
   template <typename T, typename Reader>
@@ -117,6 +124,20 @@ namespace enki
       {
         value.reset();
       }
+      return isGood;
+    }
+    else if constexpr (concepts::variant_like<T>)
+    {
+      size_t index = std::variant_npos;
+      Success<void> isGood = deserialize(index, r);
+      if (!isGood)
+      {
+        return isGood;
+      }
+
+      isGood.update(detail::deserializeVariantLike(
+        value, r, index, std::make_index_sequence<std::variant_size_v<T>>()));
+
       return isGood;
     }
     else if constexpr (concepts::custom_static_serializable<T>)
@@ -231,6 +252,36 @@ namespace enki
       }
 
       return ret;
+    }
+
+    template <typename Alternative, typename T, typename Reader>
+    constexpr bool
+    deserializeVariantAlternative(T &value, Reader &&r, bool isCorrectType, Success<void> &isGood)
+    {
+      if (!isCorrectType)
+      {
+        return false;
+      }
+      Alternative toDeserialize;
+      if (isGood.update(deserialize(toDeserialize, r)))
+      {
+        value = std::move(toDeserialize);
+      }
+      return true;
+    }
+
+    template <typename T, typename Reader, size_t... idx>
+    constexpr Success<void> deserializeVariantLike(
+      T &value,
+      Reader &&r,
+      size_t alternativeIndex,
+      std::index_sequence<idx...>)
+    {
+      Success<void> isGood;
+      (deserializeVariantAlternative<std::variant_alternative_t<idx, T>>(
+         value, r, idx == alternativeIndex, isGood) ||
+       ...);
+      return isGood;
     }
   } // namespace detail
 } // namespace enki

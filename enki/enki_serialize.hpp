@@ -117,6 +117,16 @@ namespace enki
       }
       return isGood;
     }
+    else if constexpr (concepts::variant_like<T>)
+    {
+      Success<void> isGood = serialize(value.index(), w);
+      if (!isGood)
+      {
+        return isGood;
+      }
+      std::visit([&isGood, &w](const auto &v) { isGood.update(serialize(v, w)); }, value);
+      return isGood;
+    }
     else if constexpr (concepts::custom_static_serializable<T>)
     {
       return detail::serializeCustom(
