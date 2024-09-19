@@ -113,6 +113,10 @@ namespace enki
           value = std::move(deserializedValue);
         }
       }
+      else
+      {
+        value.reset();
+      }
       return isGood;
     }
     else if constexpr (concepts::custom_static_serializable<T>)
