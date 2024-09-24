@@ -52,17 +52,18 @@ namespace enki
         return isGood;
       }
       size_t i = 0;
-      std::all_of(std::begin(value), std::end(value), [numElements, &i, &r, &isGood](auto &el) {
-        ++i;
-        if (isGood.update(deserialize(std::forward<decltype(el)>(el), r)) && i != numElements)
-        {
-          if (!isGood.update(r.nextArrayElement()))
+      static_cast<void>(
+        std::all_of(std::begin(value), std::end(value), [numElements, &i, &r, &isGood](auto &el) {
+          ++i;
+          if (isGood.update(deserialize(std::forward<decltype(el)>(el), r)) && i != numElements)
           {
-            return false;
+            if (!isGood.update(r.nextArrayElement()))
+            {
+              return false;
+            }
           }
-        }
-        return static_cast<bool>(isGood);
-      });
+          return static_cast<bool>(isGood);
+        }));
       if (isGood)
       {
         isGood.update(r.arrayEnd());
@@ -81,13 +82,13 @@ namespace enki
       using value_type = detail::assignable_value_t<T>; // NOLINT
 
       std::vector<value_type> temp(numElements);
-      for (size_t i = 0; i < numElements && isGood; ++i)
+      for (size_t i = 0; (i < numElements) && isGood; ++i)
       {
         if (isGood.update(deserialize(temp[i], r)) && i != numElements)
         {
           if (!isGood.update(r.nextRangeElement()))
           {
-            return false;
+            return isGood;
           }
         }
       }
@@ -187,7 +188,7 @@ namespace enki
         return static_cast<bool>(isGood);
       };
 
-      (deserializeOne(std::get<idx>(value), reader, ret, i) && ...);
+      static_cast<void>((deserializeOne(std::get<idx>(value), reader, ret, i) && ...));
 
       if (ret)
       {
@@ -243,9 +244,10 @@ namespace enki
       }
       size_t i = 0;
 
-      (deserializeOneCustom<std::get<idx>(T::EnkiSerial::members)>(
-         value, reader, ret, (++i) == sizeof...(idx)) &&
-       ...);
+      static_cast<void>(
+        (deserializeOneCustom<std::get<idx>(T::EnkiSerial::members)>(
+           value, reader, ret, (++i) == sizeof...(idx)) &&
+         ...));
 
       if (ret)
       {
@@ -297,9 +299,10 @@ namespace enki
       std::index_sequence<idx...>)
     {
       Success isGood;
-      (AlternativeDeserializer<std::variant_alternative_t<idx, T>>{}(
-         value, r, idx == alternativeIndex, isGood) ||
-       ...);
+      static_cast<void>(
+        (AlternativeDeserializer<std::variant_alternative_t<idx, T>>{}(
+           value, r, idx == alternativeIndex, isGood) ||
+         ...));
       return isGood;
     }
   } // namespace detail

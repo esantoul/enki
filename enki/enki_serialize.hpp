@@ -50,7 +50,7 @@ namespace enki
         return isGood;
       }
       size_t i = 0;
-      std::all_of(
+      static_cast<void>(std::all_of(
         std::begin(value), std::end(value), [numElements, &i, &w, &isGood](const auto &el) {
           ++i;
           if (isGood.update(serialize(std::forward<decltype(el)>(el), w)) && i != numElements)
@@ -61,7 +61,7 @@ namespace enki
             }
           }
           return static_cast<bool>(isGood);
-        });
+        }));
       if (isGood)
       {
         isGood.update(w.arrayEnd());
@@ -87,7 +87,7 @@ namespace enki
         return isGood;
       }
       size_t i = 0;
-      std::all_of(
+      static_cast<void>(std::all_of(
         std::begin(value), std::end(value), [&i, numElements, &w, &isGood](const auto &el) {
           ++i;
           if (isGood.update(serialize(std::forward<decltype(el)>(el), w)) && i != numElements)
@@ -98,7 +98,7 @@ namespace enki
             }
           }
           return static_cast<bool>(isGood);
-        });
+        }));
       if (isGood)
       {
         w.rangeEnd();
@@ -193,7 +193,7 @@ namespace enki
         return static_cast<bool>(isGood);
       };
 
-      (serializeOne(std::get<idx>(value), writer, ret, i) && ...);
+      static_cast<void>((serializeOne(std::get<idx>(value), writer, ret, i) && ...));
 
       if (ret)
       {
@@ -242,9 +242,10 @@ namespace enki
       }
       size_t i = 0;
 
-      (serializeOneCustom<std::get<idx>(T::EnkiSerial::members)>(
-         value, writer, ret, (++i) == sizeof...(idx)) &&
-       ...);
+      static_cast<void>(
+        (serializeOneCustom<std::get<idx>(T::EnkiSerial::members)>(
+           value, writer, ret, (++i) == sizeof...(idx)) &&
+         ...));
 
       if (ret)
       {
