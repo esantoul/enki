@@ -11,122 +11,66 @@
 
 namespace enki
 {
-  namespace detail
+  class Success
   {
-    template <typename Derived>
-    class BaseSuccess
-    {
-    public:
-      constexpr BaseSuccess() noexcept = default;
-
-      constexpr BaseSuccess(const char *errorDescription) noexcept :
-        mError(errorDescription)
-      {
-      }
-
-      constexpr BaseSuccess(size_t size) noexcept :
-        mNumBytes(size)
-      {
-      }
-
-#if __cpp_exceptions >= 199711
-      constexpr const Derived &or_throw() const
-      {
-        if (mError) [[unlikely]]
-        {
-          throw std::invalid_argument(mError);
-        }
-        return static_cast<const Derived &>(*this);
-      }
-
-      constexpr Derived &or_throw()
-      {
-        if (mError) [[unlikely]]
-        {
-          throw std::invalid_argument(mError);
-        }
-        return static_cast<Derived &>(*this);
-      }
-#endif
-
-      constexpr explicit operator bool() const noexcept
-      {
-        return mError == nullptr;
-      }
-
-      constexpr size_t size() const noexcept
-      {
-        return mNumBytes;
-      }
-
-      constexpr const char *error() const noexcept
-      {
-        return mError;
-      }
-
-      constexpr Derived &update(const BaseSuccess &other) noexcept
-      {
-        mError = other.mError;
-        mNumBytes += other.mNumBytes;
-        return static_cast<Derived &>(*this);
-      }
-
-    protected:
-      const char *mError = nullptr;
-      size_t mNumBytes = 0;
-    };
-  } // namespace detail
-
-  template <typename It>
-    requires(concepts::ByteDataIterator<It> || std::same_as<It, void>)
-  class Success;
-
-  template <>
-  class Success<void> : public detail::BaseSuccess<Success<void>>
-  {
-  private:
-    using Base_t = detail::BaseSuccess<Success<void>>;
-
-  public:
-    using Base_t::Base_t;
-  };
-
-  template <concepts::ByteDataIterator It>
-  class Success<It> : public detail::BaseSuccess<Success<It>>
-  {
-  private:
-    using Base_t = detail::BaseSuccess<Success<It>>;
-
   public:
     constexpr Success() noexcept = default;
 
-    constexpr Success(const char *error_description, It iterator) noexcept :
-      Base_t(error_description),
-      mIt(iterator)
+    constexpr Success(const char *errorDescription) noexcept :
+      mError(errorDescription)
     {
     }
 
-    constexpr Success(size_t size, It iterator) noexcept :
-      Base_t(size),
-      mIt(iterator)
+    constexpr Success(size_t size) noexcept :
+      mNumBytes(size)
     {
+    }
+
+#if __cpp_exceptions >= 199711
+    constexpr const Success &or_throw() const // NOLINT
+    {
+      if (mError) [[unlikely]]
+      {
+        throw std::invalid_argument(mError);
+      }
+      return *this;
+    }
+
+    constexpr Success &or_throw() // NOLINT
+    {
+      if (mError) [[unlikely]]
+      {
+        throw std::invalid_argument(mError);
+      }
+      return *this;
+    }
+#endif
+
+    constexpr explicit operator bool() const noexcept
+    {
+      return mError == nullptr;
+    }
+
+    constexpr size_t size() const noexcept
+    {
+      return mNumBytes;
+    }
+
+    constexpr const char *error() const noexcept
+    {
+      return mError;
     }
 
     constexpr Success &update(const Success &other) noexcept
     {
-      mIt = other.mIt;
-      return Base_t::update(other);
+      mError = other.mError;
+      mNumBytes += other.mNumBytes;
+      return *this;
     }
 
-    constexpr const It &get_iterator() const
-    {
-      return mIt;
-    }
-
-  private:
-    using Base_t::update;
-
-    It mIt{};
+  protected:
+    const char *mError = nullptr;
+    size_t mNumBytes = 0;
   };
 } // namespace enki
 
