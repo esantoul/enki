@@ -1,6 +1,8 @@
 #ifndef ENKI_UTILITIES_HPP
 #define ENKI_UTILITIES_HPP
 
+#include <bit>
+
 #include "enki/impl/concepts.hpp"
 
 namespace enki
@@ -46,12 +48,30 @@ namespace enki
   };
 } // namespace enki
 
-#define ENKIWRAP(T, m)                                                                             \
+#define ENKIWRAP(Type, member)                                                                     \
   enki::MemberWrapper<                                                                             \
-    T,                                                                                             \
-    [](const T &inst) { return inst.m; },                                                          \
-    [](T &inst, auto &val) { inst.m = val; }>                                                      \
+    Type,                                                                                          \
+    [](const Type &inst) { return inst.member; },                                                  \
+    [](Type &inst, const auto &val) { inst.member = val; }>                                        \
   {                                                                                                \
   }
 
+#define ENKIWRAP_CAST(Type, member, ToType)                                                        \
+  enki::MemberWrapper<                                                                             \
+    Type,                                                                                          \
+    [](const Type &inst) { return static_cast<ToType>(inst.member); },                             \
+    [](Type &inst, const ToType &val) { inst.member = static_cast<decltype(Type::member)>(val); }> \
+  {                                                                                                \
+  }
+
+#define ENKIWRAP_BITCAST(Type, member)                                                             \
+  enki::MemberWrapper<                                                                             \
+    Type,                                                                                          \
+    [](const Type &inst) {                                                                         \
+      using TargetType = std::array<std::byte, sizeof(Type::member)>;                              \
+      return std::bit_cast<TargetType>(inst.member);                                               \
+    },                                                                                             \
+    [](Type &inst, const auto &val) { inst.member = std::bit_cast<decltype(Type::member)>(val); }> \
+  {                                                                                                \
+  }
 #endif // ENKI_UTILITIES_HPP
