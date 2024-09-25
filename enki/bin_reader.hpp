@@ -5,6 +5,12 @@
 #include <span>
 #include <vector>
 
+#if __cpp_exceptions >= 199711
+#include <stdexcept>
+#else
+#include <cstdlib>
+#endif
+
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/success.hpp"
 
@@ -24,6 +30,14 @@ namespace enki
     template <concepts::arithmetic_or_enum T>
     constexpr Success read(T &v)
     {
+      if (mCurrentIndex + sizeof(T) > mData.size())
+      {
+#if __cpp_exceptions >= 199711
+        throw std::out_of_range("BinReader out of range read");
+#else
+        std::abort();
+#endif
+      }
       std::memcpy(&v, mData.data() + mCurrentIndex, sizeof(T));
       mCurrentIndex += sizeof(T);
       return {sizeof(T)};

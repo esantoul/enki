@@ -7,8 +7,6 @@
 #include <stdexcept>
 #endif
 
-#include "enki/impl/concepts.hpp"
-
 namespace enki
 {
   class Success
