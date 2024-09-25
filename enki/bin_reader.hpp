@@ -1,6 +1,7 @@
 #ifndef ENKI_BIN_READER_HPP
 #define ENKI_BIN_READER_HPP
 
+#include <cstdint>
 #include <cstring>
 #include <span>
 #include <vector>

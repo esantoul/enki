@@ -1,9 +1,7 @@
-#ifndef ENKI_BIN_WRITER_HPP
-#define ENKI_BIN_WRITER_HPP
+#ifndef ENKI_BIN_PROBE_HPP
+#define ENKI_BIN_PROBE_HPP
 
-#include <algorithm>
-#include <bit>
-#include <vector>
+#include <cstdint>
 
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/success.hpp"
@@ -11,20 +9,16 @@
 namespace enki
 {
   template <typename SizeType = uint32_t>
-  class BinWriter
+  class BinProbe
   {
   public:
-    using size_type = SizeType; // NOLINT
-
     template <concepts::arithmetic_or_enum T>
-    constexpr Success write(const T &v)
+    constexpr Success write(const T &)
     {
-      const auto bytes = std::bit_cast<std::array<std::byte, sizeof(T)>>(v);
-      std::copy(std::begin(bytes), std::end(bytes), std::back_inserter(mData));
       return {sizeof(T)};
     }
 
-    constexpr Success arrayBegin() const
+    constexpr Success arrayBegin(size_t) const
     {
       return {};
     }
@@ -53,15 +47,7 @@ namespace enki
     {
       return {};
     }
-
-    const std::vector<std::byte> &data() const
-    {
-      return mData;
-    }
-
-  private:
-    std::vector<std::byte> mData;
   };
 } // namespace enki
 
-#endif // ENKI_BIN_WRITER_HPP
+#endif // ENKI_BIN_PROBE_HPP
