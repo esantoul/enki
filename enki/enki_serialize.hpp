@@ -27,6 +27,9 @@ namespace enki
     {
       using Functors::operator()...;
     };
+
+    template <typename... Functors>
+    Overloaded(Functors...) -> Overloaded<Functors...>;
   } // namespace detail
 
   template <typename T, typename Writer>

@@ -128,7 +128,7 @@ namespace enki
     }
     else if constexpr (concepts::variant_like<T>)
     {
-      typename Reader::size_type index = -1;
+      typename std::remove_cvref_t<Reader>::size_type index = -1;
 
       Success isGood = deserialize(index, r);
       if (!isGood)
