@@ -18,20 +18,20 @@
 namespace enki
 {
   template <typename SizeType = uint32_t>
-  class BinReader
+  class BinSpanReader
   {
   public:
     using size_type = SizeType; // NOLINT
 
-    BinReader(std::span<const std::byte> data) :
-      mData(std::begin(data), std::end(data))
+    BinSpanReader(std::span<const std::byte> data) :
+      mSpan(data)
     {
     }
 
     template <concepts::arithmetic_or_enum T>
     constexpr Success read(T &v)
     {
-      if (mCurrentIndex + sizeof(T) > mData.size())
+      if (mCurrentIndex + sizeof(T) > mSpan.size())
       {
 #if __cpp_exceptions >= 199711
         throw std::out_of_range("BinReader out of range read");
@@ -39,7 +39,7 @@ namespace enki
         std::abort();
 #endif
       }
-      std::memcpy(&v, mData.data() + mCurrentIndex, sizeof(T));
+      std::memcpy(&v, mSpan.data() + mCurrentIndex, sizeof(T));
       mCurrentIndex += sizeof(T);
       return {sizeof(T)};
     }
@@ -77,14 +77,38 @@ namespace enki
       return {};
     }
 
-    const std::vector<std::byte> &data() const
+    const std::span<const std::byte> &data() const
     {
-      return mData;
+      return mSpan;
+    }
+
+    size_t remainingBytes() const noexcept
+    {
+      return mSpan.size() - mCurrentIndex;
     }
 
   private:
-    std::vector<std::byte> mData;
+    std::span<const std::byte> mSpan;
     size_t mCurrentIndex{};
+  };
+
+  template <typename SizeType = uint32_t>
+  class BinReader : public BinSpanReader<SizeType>
+  {
+  public:
+    using size_type = typename BinSpanReader<SizeType>::size_type; // NOLINT
+
+    BinReader(std::span<const std::byte> data) :
+      BinSpanReader<>({}),
+      mData(std::begin(data), std::end(data))
+    {
+      static_cast<BinSpanReader<> &>(*this) = {mData};
+    }
+
+    using BinSpanReader<>::read;
+
+  private:
+    std::vector<std::byte> mData;
   };
 } // namespace enki
 

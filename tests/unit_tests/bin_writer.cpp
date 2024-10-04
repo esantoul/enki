@@ -26,6 +26,16 @@ void *operator new(size_t count)
   throw std::bad_alloc{}; // required by [new.delete.single]/3
 }
 
+void operator delete(void *ptr) noexcept
+{
+  std::free(ptr);
+}
+
+void operator delete(void *ptr, size_t) noexcept
+{
+  std::free(ptr);
+}
+
 namespace
 {
   constexpr std::array<uint8_t, 1024> kValueToSerialize = [] {

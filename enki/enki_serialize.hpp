@@ -146,9 +146,9 @@ namespace enki
       }
 
       std::visit(
-        detail::Overloaded(
+        detail::Overloaded{
           [](const std::monostate &) {},
-          [&isGood, &w](const auto &v) { isGood.update(serialize(v, w)); }),
+          [&isGood, &w](const auto &v) { isGood.update(serialize(v, w)); }},
         value);
 
       return isGood;
