@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <bit>
 #include <cstdint>
+#include <iterator>
 #include <span>
 #include <vector>
 
