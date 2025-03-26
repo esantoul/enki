@@ -1,9 +1,11 @@
 #ifndef ENKI_JSON_WRITER_HPP
 #define ENKI_JSON_WRITER_HPP
 
+#include <cstdint>
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/success.hpp"
@@ -17,13 +19,20 @@ namespace enki
     template <concepts::arithmetic_or_enum T>
     constexpr Success write(const T &v)
     {
-      if constexpr (sizeof(T) == 1)
+      if constexpr (sizeof(T) < sizeof(int32_t))
       {
         mStream << static_cast<int32_t>(v);
       }
       else
       {
-        mStream << static_cast<std::underlying_type_t<T>>(v);
+        if constexpr (std::is_enum_v<T>)
+        {
+          mStream << static_cast<std::underlying_type_t<T>>(v);
+        }
+        else
+        {
+          mStream << v;
+        }
       }
       return {};
     }
