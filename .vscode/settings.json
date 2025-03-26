@@ -86,7 +86,8 @@
   "C_Cpp.intelliSenseEngine": "disabled",
   "cmake.configureOnEdit": false,
   "cmake.configureSettings": {
-    "ENKI_ENABLE_TESTS": "ON"
+    "ENKI_ENABLE_TESTS": "ON",
+    "ENKI_ENABLE_EXAMPLES": "ON"
   },
   "clangd.arguments": [
     "--query-driver=**",
