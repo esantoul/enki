@@ -10,12 +10,26 @@
 
 namespace
 {
-  bool gNewAllowed = true;
-}
+  bool sNewAllowed = true;
+
+  class ScopedAllocationPreventer
+  {
+  public:
+    ScopedAllocationPreventer()
+    {
+      sNewAllowed = false;
+    }
+
+    ~ScopedAllocationPreventer()
+    {
+      sNewAllowed = true;
+    }
+  };
+} // namespace
 
 void *operator new(size_t count)
 {
-  if (count && gNewAllowed)
+  if (count && sNewAllowed)
   {
     if (void *pRet = std::malloc(count))
     {
@@ -69,21 +83,21 @@ TEST_CASE("Bin Writer Reserve", "[unit][BinSpanWriter]")
 {
   enki::BinWriter<> writer;
 
-  gNewAllowed = false;
-
   // Check that our throwing new operator works properly
-  REQUIRE_THROWS(writer.reserve(1024));
-
-  gNewAllowed = true;
+  REQUIRE_THROWS([&] {
+    ScopedAllocationPreventer allocPreventer;
+    writer.reserve(1024);
+  }());
 
   // This should be the only memory allocation of this test
   REQUIRE_NOTHROW(writer.reserve(1024));
 
   // From here no new memory allocation is allowed
-  gNewAllowed = false;
-
   enki::Success serRes;
-  REQUIRE_NOTHROW(serRes = enki::serialize(kValueToSerialize, writer));
+  REQUIRE_NOTHROW([&] {
+    ScopedAllocationPreventer allocPreventer;
+    serRes = enki::serialize(kValueToSerialize, writer);
+  }());
 
   REQUIRE_NOTHROW(serRes.or_throw());
   REQUIRE(serRes.size() == sizeof(kValueToSerialize));
@@ -93,21 +107,17 @@ TEST_CASE("Bin Writer Reserve", "[unit][BinSpanWriter]")
   {
     REQUIRE(static_cast<uint8_t>(writer.data()[i]) == (i & 0xFF));
   }
-
-  // We allow memory allocation now that the test is done
-  gNewAllowed = true;
 }
 
 TEST_CASE("Bin Writer Clear", "[unit][BinSpanWriter]")
 {
   enki::BinWriter<> writer;
 
-  gNewAllowed = false;
-
   // Check that our throwing new operator works properly
-  REQUIRE_THROWS(writer.write(42));
-
-  gNewAllowed = true;
+  REQUIRE_THROWS([&] {
+    ScopedAllocationPreventer allocPreventer;
+    writer.write(42);
+  }());
 
   // First serialization, underlying vector should grow to adequate size
   {
@@ -131,10 +141,11 @@ TEST_CASE("Bin Writer Clear", "[unit][BinSpanWriter]")
   writer.clear();
 
   // From here no new memory allocation is allowed
-  gNewAllowed = false;
-
   enki::Success serRes;
-  REQUIRE_NOTHROW(serRes = enki::serialize(kValueToSerialize, writer));
+  REQUIRE_NOTHROW([&] {
+    ScopedAllocationPreventer allocPreventer;
+    serRes = enki::serialize(kValueToSerialize, writer);
+  }());
 
   REQUIRE_NOTHROW(serRes.or_throw());
   REQUIRE(serRes.size() == sizeof(kValueToSerialize));
@@ -146,7 +157,7 @@ TEST_CASE("Bin Writer Clear", "[unit][BinSpanWriter]")
   }
 
   // We allow memory allocation now that the test is done
-  gNewAllowed = true;
+  sNewAllowed = true;
 }
 
 TEST_CASE("Bin Span Writer Basic Use", "[unit][BinSpanWriter]")
