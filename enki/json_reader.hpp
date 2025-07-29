@@ -1,6 +1,7 @@
 #ifndef ENKI_JSON_READER_HPP
 #define ENKI_JSON_READER_HPP
 
+#include <cstdint>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -22,16 +23,9 @@ namespace enki
     template <concepts::arithmetic_or_enum T>
     constexpr Success read(T &v)
     {
-      if constexpr (sizeof(T) == 1)
-      {
-        int32_t val{};
-        mStream >> val;
-        v = static_cast<T>(val);
-      }
-      else
-      {
-        mStream >> v;
-      }
+      int64_t val{};
+      mStream >> val;
+      v = static_cast<T>(val);
       return {};
     }
 

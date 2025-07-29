@@ -1,6 +1,7 @@
 #ifndef ENKI_JSON_WRITER_HPP
 #define ENKI_JSON_WRITER_HPP
 
+#include <cstddef>
 #include <cstdint>
 #include <iomanip>
 #include <sstream>
@@ -27,7 +28,7 @@ namespace enki
       {
         if constexpr (std::is_enum_v<T>)
         {
-          mStream << static_cast<std::underlying_type_t<T>>(v);
+          mStream << static_cast<int64_t>(v);
         }
         else
         {
