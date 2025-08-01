@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.20.0)
+
+set(ENKI_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
+
 project(enki VERSION 0.1.0)
 
 enable_language(CXX C)
