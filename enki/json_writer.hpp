@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 #include "enki/impl/concepts.hpp"
@@ -17,6 +18,8 @@ namespace enki
   class JSONWriter
   {
   public:
+    static constexpr bool serialize_custom_names = true; // NOLINT
+
     template <concepts::arithmetic_or_enum T>
     constexpr Success write(const T &v)
     {
@@ -81,6 +84,30 @@ namespace enki
     constexpr Success nextRangeElement()
     {
       mStream << ", ";
+      return {};
+    }
+
+    constexpr Success objectBegin()
+    {
+      mStream << "{";
+      return {};
+    }
+
+    constexpr Success objectEnd()
+    {
+      mStream << "}";
+      return {};
+    }
+
+    constexpr Success nextObjectElement()
+    {
+      mStream << ", ";
+      return {};
+    }
+
+    constexpr Success objectName(std::string_view name)
+    {
+      mStream << std::quoted(name) << " : ";
       return {};
     }
 

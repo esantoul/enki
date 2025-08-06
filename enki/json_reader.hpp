@@ -15,6 +15,8 @@ namespace enki
   class JSONReader
   {
   public:
+    static constexpr bool serialize_custom_names = true; // NOLINT
+
     JSONReader(std::string_view sv)
     {
       mStream << sv;
@@ -78,6 +80,44 @@ namespace enki
     {
       char junk{};
       mStream >> junk;
+      return {};
+    }
+
+    constexpr Success objectBegin()
+    {
+      char junk{};
+      mStream >> junk;
+      return {};
+    }
+
+    constexpr Success objectEnd()
+    {
+      char junk{};
+      mStream >> junk;
+      return {};
+    }
+
+    constexpr Success nextObjectElement()
+    {
+      char junk{};
+      mStream >> junk;
+      return {};
+    }
+
+    constexpr Success objectName(std::string_view name)
+    {
+      std::string readName;
+      mStream >> std::quoted(readName);
+
+      if (readName != name)
+      {
+        return "Encountered invalid variable name";
+      }
+
+      char junk{};
+
+      mStream >> junk;
+
       return {};
     }
 

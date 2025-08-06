@@ -6,6 +6,7 @@
 
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/success.hpp"
+#include "enki/impl/utilities.hpp"
 
 namespace enki
 {
@@ -156,7 +157,7 @@ namespace enki
     else if constexpr (concepts::custom_static_serializable<T>)
     {
       return detail::serializeCustom(
-        value, w, std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
+        value, w, std::make_index_sequence<T::EnkiSerial::members::count>());
     }
     else
     {
@@ -206,27 +207,22 @@ namespace enki
       return ret;
     }
 
-    template <auto member, concepts::custom_static_serializable T, typename Writer>
+    template <
+      std::derived_from<RegisterBase> Reg,
+      concepts::custom_static_serializable T,
+      typename Writer>
     constexpr bool serializeOneCustom(const T &inst, Writer &&writer, Success &isGood, bool isLast)
     {
-      if (isGood.update(serialize(inst.*member, writer)) && !isLast)
+      if constexpr (std::remove_cvref_t<Writer>::serialize_custom_names)
       {
-        if (!isGood.update(writer.nextArrayElement()))
+        if (!isGood.update(writer.objectName(Reg::name)))
         {
           return false;
         }
       }
-
-      return static_cast<bool>(isGood);
-    }
-
-    template <auto member, concepts::custom_static_serializable T, typename Writer>
-      requires concepts::proper_member_wrapper<T, decltype(member)>
-    constexpr bool serializeOneCustom(const T &inst, Writer &&writer, Success &isGood, bool isLast)
-    {
-      if (isGood.update(serialize(member.getter(inst), writer)) && !isLast)
+      if (isGood.update(serialize(Reg::getter(inst), writer)) && !isLast)
       {
-        if (!isGood.update(writer.nextArrayElement()))
+        if (!isGood.update(writer.nextObjectElement()))
         {
           return false;
         }
@@ -238,7 +234,7 @@ namespace enki
     template <typename T, typename Writer, size_t... idx>
     constexpr Success serializeCustom(const T &value, Writer &&writer, std::index_sequence<idx...>)
     {
-      Success ret = writer.arrayBegin();
+      Success ret = writer.objectBegin();
       if (!ret)
       {
         return ret;
@@ -246,13 +242,13 @@ namespace enki
       size_t i = 0;
 
       static_cast<void>(
-        (serializeOneCustom<std::get<idx>(T::EnkiSerial::members)>(
+        (serializeOneCustom<detail::get_nth_register_t<idx, typename T::EnkiSerial::members>>(
            value, writer, ret, (++i) == sizeof...(idx)) &&
          ...));
 
       if (ret)
       {
-        ret.update(writer.arrayEnd());
+        ret.update(writer.objectEnd());
       }
 
       return ret;

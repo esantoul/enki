@@ -6,7 +6,7 @@
 #include <span>
 #include <vector>
 
-#if __cpp_exceptions >= 199711
+#if __cpp_exceptions >= 199'711
 #include <stdexcept>
 #else
 #include <cstdlib>
@@ -21,7 +21,8 @@ namespace enki
   class BinSpanReader
   {
   public:
-    using size_type = SizeType; // NOLINT
+    using size_type = SizeType;                           // NOLINT
+    static constexpr bool serialize_custom_names = false; // NOLINT
 
     BinSpanReader(std::span<const std::byte> data) :
       mSpan(data)
@@ -33,7 +34,8 @@ namespace enki
     {
       if (mCurrentIndex + sizeof(T) > mSpan.size())
       {
-#if __cpp_exceptions >= 199711
+#if __cpp_exceptions >= 199'711
+
         throw std::out_of_range("BinReader out of range read");
 #else
         std::abort();
@@ -73,6 +75,26 @@ namespace enki
     }
 
     constexpr Success nextRangeElement() const
+    {
+      return {};
+    }
+
+    constexpr Success objectBegin() const
+    {
+      return {};
+    }
+
+    constexpr Success objectEnd() const
+    {
+      return {};
+    }
+
+    constexpr Success nextObjectElement() const
+    {
+      return {};
+    }
+
+    constexpr Success objectName(std::string_view /* name */) const
     {
       return {};
     }

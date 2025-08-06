@@ -38,7 +38,7 @@ BraceWrapping: {
     # 'SplitEmptyRecord': 'true'
     # 'SplitEmptyNamespace': 'true'
 }
-BracedInitializerIndentWidth: 2
+# BracedInitializerIndentWidth: 2
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterColon
 ConstructorInitializerIndentWidth: 2
@@ -51,11 +51,11 @@ InsertBraces: true
 # FixNamespaceComments: true
 IntegerLiteralSeparator: {
   'Binary': '4'
-  'BinaryMinDigits': '5'
+  # 'BinaryMinDigits': '5'
   'Decimal': '3'
-  'DecimalMinDigits': '7'
+  # 'DecimalMinDigits': '7'
   'Hex': '2',
-  'HexMinDigits': '5'
+  # 'HexMinDigits': '5'
 }
 KeepEmptyLinesAtTheStartOfBlocks: false
 # LambdaBodyIndentation: Signature
