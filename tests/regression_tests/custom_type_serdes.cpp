@@ -48,7 +48,7 @@ namespace
 
   struct MyClass::EnkiSerial
   {
-    using members = enki::Register<&MyClass::mI, &MyClass::mD>; // NOLINT
+    using Members = enki::Register<&MyClass::mI, &MyClass::mD>; // NOLINT
   };
 
   struct SerialisationExpectedSuccess
@@ -103,7 +103,7 @@ namespace
   struct BitStruct::EnkiSerial
   {
     // NOLINTNEXTLINE
-    using members = enki::Register<
+    using Members = enki::Register<
       ENKIWRAP(BitStruct, b),
       ENKIWRAP(BitStruct, c),
       ENKIWRAP(BitStruct, d),

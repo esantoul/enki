@@ -43,13 +43,13 @@ struct ComplexData
 
 struct Person::EnkiSerial
 {
-  using members =
+  using Members =
     enki::Register<ENKIWRAP(Person, name), ENKIWRAP(Person, age), ENKIWRAP(Person, height)>;
 };
 
 struct ComplexData::EnkiSerial
 {
-  using members =
+  using Members =
     enki::Register<&ComplexData::numbers, &ComplexData::description, &ComplexData::metrics>;
 };
 

@@ -37,7 +37,7 @@ namespace
   struct FixedPoint::EnkiSerial
   {
     // NOLINTNEXTLINE
-    using members = enki::Register<ENKIWRAP_CAST(FixedPoint, mValue, float)>;
+    using Members = enki::Register<ENKIWRAP_CAST(FixedPoint, mValue, float)>;
   };
 
   struct S
@@ -60,7 +60,7 @@ namespace
   struct S::EnkiSerial
   {
     // NOLINTNEXTLINE
-    using members = enki::Register<ENKIWRAP_BITCAST(S, value)>;
+    using Members = enki::Register<ENKIWRAP_BITCAST(S, value)>;
   };
 } // namespace
 

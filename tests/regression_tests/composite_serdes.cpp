@@ -25,7 +25,7 @@ namespace
     struct EnkiSerial
     {
       // NOLINTNEXTLINE
-      using members = enki::Register<&S::numbers, &S::timestamp>;
+      using Members = enki::Register<&S::numbers, &S::timestamp>;
     };
   };
 } // namespace
@@ -81,7 +81,7 @@ namespace
   struct TrackInfo::EnkiSerial
   {
     // NOLINTNEXTLINE
-    using members = enki::
+    using Members = enki::
       Register<ENKIWRAP(TrackInfo, style), ENKIWRAP(TrackInfo, rating), &TrackInfo::playCount>;
   };
 

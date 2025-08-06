@@ -87,7 +87,7 @@ struct Point {
 
 struct Point::EnkiSerial {
     // Define which members to serialize and in what order
-    static constexpr auto members = std::make_tuple(&Point::x, &Point::y);
+    using Members = enki::Register<&Point::x, &Point::y>;
 };
 ```
 
@@ -106,12 +106,12 @@ struct Person {
 struct Person::EnkiSerial {
     // Using regular member pointers for standard types
     // Using ENKIWRAP for bitfields to ensure proper serialization
-    static constexpr auto members = std::make_tuple(
+    using Members = enki::Register<
         &Person::name,
         &Person::age,
         ENKIWRAP(Person, preferences),  // Properly handle bitfield
         ENKIWRAP(Person, settings)      // Properly handle bitfield
-    );
+    >;
 };
 ```
 

@@ -126,14 +126,14 @@ namespace enki::concepts
     template <typename T, size_t... idx>
     constexpr bool isTupleOfClassMembers(std::index_sequence<idx...>)
     {
-      return (class_member<T, std::get<idx>(T::EnkiSerial::members)> && ...);
+      return (class_member<T, std::get<idx>(T::EnkiSerial::Members)> && ...);
     }
   } // namespace detail
 
   template <typename T>
   concept custom_static_serializable =
-    std::derived_from<typename T::EnkiSerial::members, ::enki::detail::RegisterBase> &&
-    (T::EnkiSerial::members::count >= 1);
+    std::derived_from<typename T::EnkiSerial::Members, ::enki::detail::RegisterBase> &&
+    (T::EnkiSerial::Members::count >= 1);
 } // namespace enki::concepts
 
 #endif // ENKI_CONCEPTS_HPP

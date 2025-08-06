@@ -149,7 +149,7 @@ namespace enki
     else if constexpr (concepts::custom_static_serializable<T>)
     {
       return detail::deserializeCustom(
-        value, r, std::make_index_sequence<T::EnkiSerial::members::count>());
+        value, r, std::make_index_sequence<T::EnkiSerial::Members::count>());
     }
     else
     {
@@ -240,7 +240,7 @@ namespace enki
       size_t i = 0;
 
       static_cast<void>(
-        (deserializeOneCustom<detail::get_nth_register_t<idx, typename T::EnkiSerial::members>>(
+        (deserializeOneCustom<detail::get_nth_register_t<idx, typename T::EnkiSerial::Members>>(
            value, reader, ret, (++i) == sizeof...(idx)) &&
          ...));
 
