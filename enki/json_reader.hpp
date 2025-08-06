@@ -25,9 +25,18 @@ namespace enki
     template <concepts::arithmetic_or_enum T>
     constexpr Success read(T &v)
     {
-      int64_t val{};
-      mStream >> val;
-      v = static_cast<T>(val);
+      if constexpr (std::is_floating_point_v<T>)
+      {
+        T val{};
+        mStream >> val;
+        v = static_cast<T>(val);
+      }
+      else
+      {
+        int64_t val{};
+        mStream >> val;
+        v = static_cast<T>(val);
+      }
       return {};
     }
 
