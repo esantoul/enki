@@ -121,7 +121,7 @@ namespace enki
     using class_type = typename decltype(member)::class_type; // NOLINT
     using value_type = typename decltype(member)::value_type; // NOLINT
 
-    static constexpr std::string_view name = getMemberName<member>(); // NOLINT
+    static constexpr std::string_view name = decltype(member)::name; // NOLINT
 
     static constexpr auto getter = decltype(member)::getter; // NOLINT
     static constexpr auto setter = decltype(member)::setter; // NOLINT
@@ -139,7 +139,7 @@ namespace enki
     using class_type = typename decltype(member)::class_type; // NOLINT
     using value_type = typename decltype(member)::value_type; // NOLINT
 
-    static constexpr std::string_view name = getMemberName<member>(); // NOLINT
+    static constexpr std::string_view name = decltype(member)::name; // NOLINT
 
     static constexpr auto getter = decltype(member)::getter; // NOLINT
     static constexpr auto setter = decltype(member)::setter; // NOLINT
