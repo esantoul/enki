@@ -107,7 +107,7 @@ namespace enki
 
     constexpr Success objectName(std::string_view name)
     {
-      mStream << std::quoted(name) << " : ";
+      mStream << std::quoted(name) << ": ";
       return {};
     }
 
