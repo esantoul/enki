@@ -20,6 +20,12 @@ namespace enki
   public:
     static constexpr bool serialize_custom_names = true; // NOLINT
 
+    constexpr Success write(const bool v)
+    {
+      mStream << (v ? "true" : "false");
+      return {};
+    }
+
     template <concepts::arithmetic_or_enum T>
     constexpr Success write(const T &v)
     {

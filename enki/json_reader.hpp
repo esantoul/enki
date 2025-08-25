@@ -11,6 +11,30 @@
 
 namespace enki
 {
+  namespace
+  {
+    std::string readWord(std::istream &is)
+    {
+      std::string word;
+
+      // Skip leading non-alphanumeric characters (if you want that)
+      int ch;
+      while ((ch = is.peek()) != EOF && !std::isalnum(static_cast<unsigned char>(ch)))
+      {
+        // If you want to *stop* on non-alnum instead of skipping, remove this loop
+        is.get();
+      }
+
+      // Collect alphanumeric characters
+      while ((ch = is.peek()) != EOF && std::isalnum(static_cast<unsigned char>(ch)))
+      {
+        word.push_back(static_cast<char>(is.get()));
+      }
+
+      return word;
+    }
+  } // namespace
+
   template <typename SizeType = uint32_t>
   class JSONReader
   {
@@ -20,6 +44,25 @@ namespace enki
     JSONReader(std::string_view sv)
     {
       mStream << sv;
+    }
+
+    constexpr Success read(bool &v)
+    {
+      std::string val = readWord(mStream);
+
+      if (val == "true")
+      {
+        v = true;
+      }
+      else if (val == "false")
+      {
+        v = false;
+      }
+      else
+      {
+        return "Invalid boolean value";
+      }
+      return {};
     }
 
     template <concepts::arithmetic_or_enum T>
