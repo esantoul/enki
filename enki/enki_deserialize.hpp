@@ -14,7 +14,9 @@ namespace enki
   {
     template <typename T, typename Reader>
     concept immediately_readable = requires(Reader r, T &v) {
-      { r.read(v) } -> std::same_as<enki::Success>;
+      {
+        r.read(v)
+      } -> std::same_as<enki::Success>;
     };
 
     template <typename T, typename Reader, size_t... idx>
@@ -84,7 +86,7 @@ namespace enki
       std::vector<value_type> temp(numElements);
       for (size_t i = 0; (i < numElements) && isGood; ++i)
       {
-        if (isGood.update(deserialize(temp[i], r)) && i != numElements)
+        if (isGood.update(deserialize(temp[i], r)) && i != (numElements - 1))
         {
           if (!isGood.update(r.nextRangeElement()))
           {
