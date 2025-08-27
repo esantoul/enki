@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/success.hpp"
@@ -19,19 +20,98 @@ namespace enki
 
       // Skip leading non-alphanumeric characters (if you want that)
       int ch;
-      while ((ch = is.peek()) != EOF && !std::isalnum(static_cast<unsigned char>(ch)))
+      while ((ch = is.peek()) != std::ios_base::eofbit &&
+             !std::isalnum(static_cast<unsigned char>(ch)))
       {
         // If you want to *stop* on non-alnum instead of skipping, remove this loop
         is.get();
       }
 
       // Collect alphanumeric characters
-      while ((ch = is.peek()) != EOF && std::isalnum(static_cast<unsigned char>(ch)))
+      while ((ch = is.peek()) != std::ios_base::eofbit &&
+             std::isalnum(static_cast<unsigned char>(ch)))
       {
         word.push_back(static_cast<char>(is.get()));
       }
 
       return word;
+    }
+
+    // Trim whitespace from both ends of a string
+    std::string_view trim(std::string_view s)
+    {
+      const size_t start = s.find_first_not_of(" \t\n\r");
+      if (start == std::string_view::npos)
+      {
+        return "";
+      }
+      const size_t end = s.find_last_not_of(" \t\n\r");
+      return s.substr(start, end - start + 1);
+    }
+
+    int32_t countJsonArrayElements(std::string_view rawInput)
+    {
+      const std::string_view input = trim(rawInput);
+
+      // Basic validation
+      if (input.size() < 2 || input.front() != '[')
+      {
+        throw std::invalid_argument("Not a valid JSON array");
+      }
+
+      int depth = 0;
+      bool inString = false;
+      bool escape = false;
+      int countCommas = 0;
+
+      size_t i = 1;
+
+      for (; i < (input.size() - 1) && (depth >= 0); ++i)
+      {
+        const char c = input[i];
+
+        if (escape)
+        {
+          escape = false;
+          continue;
+        }
+
+        if (c == '\\')
+        {
+          escape = true;
+          continue;
+        }
+
+        if (c == '"')
+        {
+          inString = !inString;
+          continue;
+        }
+
+        if (!inString)
+        {
+          if (c == '[' || c == '{')
+          {
+            depth++;
+          }
+          else if (c == ']' || c == '}')
+          {
+            depth--;
+          }
+          else if (c == ',' && depth == 0)
+          {
+            countCommas++;
+          }
+        }
+      }
+
+      // If i == 1, array is empty
+      if (i == 1)
+      {
+        return 0;
+      }
+
+      return countCommas + 1;
     }
   } // namespace
 
@@ -112,19 +192,18 @@ namespace enki
 
     constexpr Success rangeBegin(size_t &numElements)
     {
+      numElements = countJsonArrayElements(mStream.view().substr(mStream.tellg()));
+
       char junk{};
-      mStream >> junk >> numElements;
-      if (numElements > 0)
-      {
-        mStream >> junk;
-      }
+      mStream >> junk; // Remove '['
+
       return {};
     }
 
     constexpr Success rangeEnd()
     {
       char junk{};
-      mStream >> junk;
+      mStream >> junk; // Remove ']'
       return {};
     }
 

@@ -71,13 +71,9 @@ namespace enki
       return {};
     }
 
-    constexpr Success rangeBegin(size_t numElements)
+    constexpr Success rangeBegin(size_t /* numElements */)
     {
-      mStream << "[" << numElements;
-      if (numElements > 0)
-      {
-        mStream << ", ";
-      }
+      mStream << "[";
       return {};
     }
 
