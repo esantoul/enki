@@ -5,6 +5,23 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "(Linux) Run & Debug Example",
+      "type": "cppdbg",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "stopAtEntry": true,
+      "program": "${workspaceFolder}/build/examples/example",
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": false
+        }
+      ]
+    },
+    {
       "name": "(Windows) Run & Debug Example",
       "type": "cppvsdbg",
       "request": "launch",

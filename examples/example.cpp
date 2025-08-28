@@ -43,14 +43,14 @@ struct ComplexData
 
 struct Person::EnkiSerial
 {
-  static constexpr auto members =
-    std::make_tuple(ENKIWRAP(Person, name), ENKIWRAP(Person, age), ENKIWRAP(Person, height));
+  using Members =
+    enki::Register<ENKIWRAP(Person, name), ENKIWRAP(Person, age), ENKIWRAP(Person, height)>;
 };
 
 struct ComplexData::EnkiSerial
 {
-  static constexpr auto members =
-    std::make_tuple(&ComplexData::numbers, &ComplexData::description, &ComplexData::metrics);
+  using Members =
+    enki::Register<&ComplexData::numbers, &ComplexData::description, &ComplexData::metrics>;
 };
 
 // Binary serialization examples

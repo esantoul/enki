@@ -48,7 +48,7 @@ namespace
 
   struct MyClass::EnkiSerial
   {
-    static constexpr auto members = std::make_tuple(&MyClass::mI, &MyClass::mD); // NOLINT
+    using Members = enki::Register<&MyClass::mI, &MyClass::mD>; // NOLINT
   };
 
   struct SerialisationExpectedSuccess
@@ -103,11 +103,11 @@ namespace
   struct BitStruct::EnkiSerial
   {
     // NOLINTNEXTLINE
-    static constexpr auto members = std::make_tuple(
+    using Members = enki::Register<
       ENKIWRAP(BitStruct, b),
       ENKIWRAP(BitStruct, c),
       ENKIWRAP(BitStruct, d),
-      ENKIWRAP(BitStruct, a));
+      ENKIWRAP(BitStruct, a)>;
   };
 } // namespace
 

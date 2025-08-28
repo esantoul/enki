@@ -37,7 +37,7 @@ namespace
   struct FixedPoint::EnkiSerial
   {
     // NOLINTNEXTLINE
-    static constexpr auto members = std::make_tuple(ENKIWRAP_CAST(FixedPoint, mValue, float));
+    using Members = enki::Register<ENKIWRAP_CAST(FixedPoint, mValue, float)>;
   };
 
   struct S
@@ -60,7 +60,7 @@ namespace
   struct S::EnkiSerial
   {
     // NOLINTNEXTLINE
-    static constexpr auto members = std::make_tuple(ENKIWRAP_BITCAST(S, value));
+    using Members = enki::Register<ENKIWRAP_BITCAST(S, value)>;
   };
 } // namespace
 

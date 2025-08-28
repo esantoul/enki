@@ -84,15 +84,17 @@ namespace enki::concepts
   } && detail::allVariantIndexesGood<T>(std::make_index_sequence<std::variant_size_v<T>>());
 } // namespace enki::concepts
 
-namespace enki
+namespace enki::detail
 {
+  struct RegisterBase;
   struct WrapperBase;
-}
+
+} // namespace enki::detail
 
 namespace enki::concepts
 {
   template <typename T, typename MW>
-  concept proper_member_wrapper = std::derived_from<MW, ::enki::WrapperBase> &&
+  concept proper_member_wrapper = std::derived_from<MW, ::enki::detail::WrapperBase> &&
                                   std::derived_from<T, typename MW::class_type> && requires {
                                     typename MW::value_type;
                                     MW::getter;
@@ -124,16 +126,14 @@ namespace enki::concepts
     template <typename T, size_t... idx>
     constexpr bool isTupleOfClassMembers(std::index_sequence<idx...>)
     {
-      return (class_member<T, std::get<idx>(T::EnkiSerial::members)> && ...);
+      return (class_member<T, std::get<idx>(T::EnkiSerial::Members)> && ...);
     }
   } // namespace detail
 
   template <typename T>
   concept custom_static_serializable =
-    requires(T inst) { std::tuple_size<decltype(T::EnkiSerial::members)>::value; } &&
-    (std::tuple_size_v<decltype(T::EnkiSerial::members)> >= 1) &&
-    detail::isTupleOfClassMembers<T>(
-      std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
+    std::derived_from<typename T::EnkiSerial::Members, ::enki::detail::RegisterBase> &&
+    (T::EnkiSerial::Members::count >= 1);
 } // namespace enki::concepts
 
 #endif // ENKI_CONCEPTS_HPP

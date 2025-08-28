@@ -45,6 +45,11 @@ namespace enki
       return mStr + size();
     }
 
+    constexpr operator std::string_view() const
+    {
+      return {mStr, mStr + mSize};
+    }
+
     size_t mSize;
     char mStr[cty]{};
   };

@@ -25,7 +25,7 @@ namespace
     struct EnkiSerial
     {
       // NOLINTNEXTLINE
-      static constexpr auto members = std::make_tuple(&S::numbers, &S::timestamp);
+      using Members = enki::Register<&S::numbers, &S::timestamp>;
     };
   };
 } // namespace
@@ -81,10 +81,8 @@ namespace
   struct TrackInfo::EnkiSerial
   {
     // NOLINTNEXTLINE
-    static constexpr auto members = std::make_tuple(
-      ENKIWRAP(TrackInfo, style),
-      ENKIWRAP(TrackInfo, rating),
-      &TrackInfo::playCount);
+    using Members = enki::
+      Register<ENKIWRAP(TrackInfo, style), ENKIWRAP(TrackInfo, rating), &TrackInfo::playCount>;
   };
 
 #pragma pack(pop)
@@ -93,7 +91,7 @@ namespace
 TEST_CASE("Composite Test (Custom type at bottom of data hierarchy)", "[regression]")
 {
   const std::unordered_map<std::string, TrackInfo> allSongs{
-    std::make_pair("Electric anthem", TrackInfo{9999, TrackInfo::eStyle::Rock, 7}),
+    std::make_pair("Electric anthem", TrackInfo{9'999, TrackInfo::eStyle::Rock, 7}),
     std::make_pair("Mozenhelm no.3", TrackInfo{47, TrackInfo::eStyle::Classic, 12})};
 
   std::remove_cvref_t<decltype(allSongs)> allSongs2;

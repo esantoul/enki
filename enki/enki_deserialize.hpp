@@ -14,7 +14,9 @@ namespace enki
   {
     template <typename T, typename Reader>
     concept immediately_readable = requires(Reader r, T &v) {
-      { r.read(v) } -> std::same_as<enki::Success>;
+      {
+        r.read(v)
+      } -> std::same_as<enki::Success>;
     };
 
     template <typename T, typename Reader, size_t... idx>
@@ -84,7 +86,7 @@ namespace enki
       std::vector<value_type> temp(numElements);
       for (size_t i = 0; (i < numElements) && isGood; ++i)
       {
-        if (isGood.update(deserialize(temp[i], r)) && i != numElements)
+        if (isGood.update(deserialize(temp[i], r)) && i != (numElements - 1))
         {
           if (!isGood.update(r.nextRangeElement()))
           {
@@ -149,7 +151,7 @@ namespace enki
     else if constexpr (concepts::custom_static_serializable<T>)
     {
       return detail::deserializeCustom(
-        value, r, std::make_index_sequence<std::tuple_size_v<decltype(T::EnkiSerial::members)>>());
+        value, r, std::make_index_sequence<T::EnkiSerial::Members::count>());
     }
     else
     {
@@ -198,34 +200,29 @@ namespace enki
       return ret;
     }
 
-    template <auto member, concepts::custom_static_serializable T, typename Reader>
+    template <
+      std::derived_from<detail::RegisterBase> Reg,
+      concepts::custom_static_serializable T,
+      typename Reader>
     constexpr bool deserializeOneCustom(T &inst, Reader &&reader, Success &isGood, bool isLast)
     {
-      if (isGood.update(deserialize(inst.*member, reader)) && !isLast)
+      if constexpr (std::remove_cvref_t<Reader>::serialize_custom_names)
       {
-        if (!isGood.update(reader.nextArrayElement()))
+        if (!isGood.update(reader.objectName(Reg::name)))
         {
           return false;
         }
       }
-
-      return static_cast<bool>(isGood);
-    }
-
-    template <auto member, concepts::custom_static_serializable T, typename Reader>
-      requires concepts::proper_member_wrapper<T, decltype(member)>
-    constexpr bool deserializeOneCustom(T &inst, Reader &&reader, Success &isGood, bool isLast)
-    {
-      typename decltype(member)::value_type temp{};
+      typename Reg::value_type temp{};
       if (!isGood.update(deserialize(temp, reader)))
       {
         return false;
       }
-      member.setter(inst, temp);
+      Reg::setter(inst, temp);
 
       if (!isLast)
       {
-        if (!isGood.update(reader.nextArrayElement()))
+        if (!isGood.update(reader.nextObjectElement()))
         {
           return false;
         }
@@ -237,7 +234,7 @@ namespace enki
     template <typename T, typename Reader, size_t... idx>
     constexpr Success deserializeCustom(T &value, Reader &&reader, std::index_sequence<idx...>)
     {
-      Success ret = reader.arrayBegin();
+      Success ret = reader.objectBegin();
       if (!ret)
       {
         return ret;
@@ -245,13 +242,13 @@ namespace enki
       size_t i = 0;
 
       static_cast<void>(
-        (deserializeOneCustom<std::get<idx>(T::EnkiSerial::members)>(
+        (deserializeOneCustom<detail::get_nth_register_t<idx, typename T::EnkiSerial::Members>>(
            value, reader, ret, (++i) == sizeof...(idx)) &&
          ...));
 
       if (ret)
       {
-        ret.update(reader.arrayEnd());
+        ret.update(reader.objectEnd());
       }
 
       return ret;
