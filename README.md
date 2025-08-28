@@ -2,72 +2,76 @@
 
 ![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)
 
-Enki is a C++20 serialization library designed to enable simple to use and clean data serialization.
+Enki is a C++20 serialization library designed to enable simple, clean, and efficient data serialization. It provides both **binary** and **JSON** serialization capabilities with a unified, extensible API.
 
 ## Requirements
 
-- C++20 compliant compiler
-- CMake 3.20 or higher
-
-The library is compatible with GCC11 and above, as well as Clang13 and above.
+- **C++20** compliant compiler (GCC 11+, Clang 13+, MSVC 2022+)
+- **CMake 3.20** or higher
 
 ## Features
 
-Enki provides a robust, flexible system for serializing both primitive types and custom structures. This section explores how serialization and deserialization work within the library.
+Enki provides a robust, flexible system for serializing both primitive types and custom structures with support for:
 
-### Core Serialization Logic
+### Data Types
+- ✅ Primitive arithmetic types (integers, floats, booleans)
+- ✅ Enums (both scoped and unscoped)
+- ✅ Fixed size arrays (`std::array` & C-style arrays)
+- ✅ Range constructible containers (`std::vector`, `std::list`, etc.)
+- ✅ Maps and associative containers (`std::map`, `std::unordered_map`, etc.)
+- ✅ Tuples and tuple-like structures
+- ✅ Optional values (`std::optional`)
+- ✅ Variants (`std::variant`) (not tested yet)
+- ✅ Custom structures with reflection-like capabilities
 
-At its heart, Enki uses template specialization to handle different types in an extensible way. The library can serialize:
+### Serialization Formats
+- **Binary Serialization**: Compact, efficient binary format using `BinWriter`/`BinReader`
+- **JSON Serialization**: Human-readable JSON format using `JSONWriter`/`JSONReader`
+- **Span-based Writers**: Memory-efficient serialization with `BinSpanWriter`/`BinSpanReader`
 
-- Primitive arithmetic types
-- Arrays and containers
-- Tuples and tuple-like structures
-- Optional values
-- Variants
-- Custom structures using the `EnkiSerial` pattern or by defining custom serializer/deserializer classes
+### Advanced Features
+- **Custom Structure Serialization**: Define serialization behavior using the `EnkiSerial` pattern
+- **Bitfield Support**: Handle bitfields with `ENKIWRAP` macro
+- **Range-based Serialization**: Automatic handling of range constructible containers
+- **Template Specialization**: Extensible system for custom types
+- **Error Handling**: Comprehensive error reporting with `or_throw()` and custom error types
 
-### Basic Usage Example
+### Quick Start Examples
 
+#### Binary Serialization
 ```cpp
-#include <array>
-#include <string_view>
+#include "enki/enki.hpp"
 
-#include "enki/bin_reader.hpp"
-#include "enki/bin_writer.hpp"
-#include "enki/serialize.hpp"
+int main() {
+    // Simple binary serialization
+    int value = 42;
+    enki::BinWriter writer;
+    enki::serialize(value, writer).or_throw();
 
-// Values to serialize
-constexpr int32_t integer = 42;
-constexpr double floating = 3.14159;
-const std::string text = "Hello Enki!";
-
-std::vector<std::byte> basic_serialization() {
-  enki::BinWriter writer;
-
-  // Serialize values
-  enki::serialize(integer, writer).or_throw();
-  enki::serialize(floating, writer).or_throw();
-  enki::serialize(text, writer).or_throw();
-
-  return writer.data();
+    // Deserialize
+    enki::BinReader reader(writer.data());
+    int result;
+    enki::deserialize(result, reader).or_throw();
+    // result == 42
 }
+```
 
-bool basic_deserialization(const std::vector<std::byte>& buffer)
-{
-  enki::BinReader reader(buffer);
-  // Deserialize values
-  int32_t out_int{};
-  double out_double{};
-  std::string out_text;
+#### JSON Serialization
+```cpp
+#include "enki/enki.hpp"
 
-  enki::deserialize(out_int, reader).or_throw();
-  enki::deserialize(out_double, reader).or_throw();
-  enki::deserialize(out_text, reader).or_throw();
+int main() {
+    // Simple JSON serialization
+    int value = 42;
+    enki::JSONWriter writer;
+    enki::serialize(value, writer).or_throw();
+    std::string json = writer.data().str();  // "42"
 
-  // Verify correctness
-  return out_int == integer &&
-          out_double == floating &&
-          out_text == text;
+    // Deserialize
+    enki::JSONReader reader(json);
+    int result;
+    enki::deserialize(result, reader).or_throw();
+    // result == 42
 }
 ```
 
@@ -134,24 +138,12 @@ cmake --build .
 
 ### Build Options
 
-- `ENKI_ENABLE_TESTS`: Build and run tests (default: OFF)
+- `ENKI_ENABLE_TESTS`: Build and run comprehensive test suite (default: OFF)
+- `ENKI_ENABLE_EXAMPLES`: Build example program demonstrating library usage (default: OFF)
 
-## Testing
+### Integration Examples
 
-Enki uses Catch2 for testing. To build and run the tests:
-
-```bash
-mkdir build && cd build
-cmake .. -DENKI_ENABLE_TESTS=ON
-cmake --build .
-ctest
-```
-
-## Integration
-
-### Using With CMake
-
-#### Option 1: Using FetchContent
+#### Using FetchContent
 ```cmake
 include(FetchContent)
 FetchContent_Declare(
@@ -164,7 +156,7 @@ FetchContent_MakeAvailable(enki)
 target_link_libraries(your_target PRIVATE enki)
 ```
 
-#### Option 2: Using CPM.cmake
+#### Using CPM.cmake
 ```cmake
 include(cmake/CPM.cmake)
 
@@ -173,24 +165,59 @@ CPMAddPackage("gh:esantoul/enki@main") # or specify a version tag
 target_link_libraries(your_target PRIVATE enki)
 ```
 
-#### Option 3: As a subdirectory
+#### As a Subdirectory
 ```cmake
 add_subdirectory(path/to/enki)
 target_link_libraries(your_target PRIVATE enki)
 ```
 
+## Testing & Examples
+
+### Running Tests
+Enki includes a comprehensive test suite built with Catch2:
+
+```bash
+mkdir build && cd build
+cmake .. -DENKI_ENABLE_TESTS=ON
+cmake --build .
+ctest
+```
+
+The test suite covers:
+- **Unit Tests**: Core serialization functionality
+- **Regression Tests**: Data type serialization/deserialization
+  - Arithmetic types (integers, floats, booleans)
+  - Arrays and containers (`std::vector`, `std::array`)
+  - Maps and associative containers
+  - Custom types and structures
+  - Optional values and variants
+  - Enum serialization
+  - Tuple-like structures
+  - Range constructible containers
+  - Binary serialization (BinWriter/BinReader/BinSpanWriter/BinSpanReader)
+
+JSON serialization (JSONWriter/JSONReader) is not tested yet.
+
+### Running Examples
+Build and run the example program to see Enki in action:
+
+```bash
+mkdir build && cd build
+cmake .. -DENKI_ENABLE_EXAMPLES=ON
+cmake --build .
+./examples/example
+```
+
+The example demonstrate:
+- Binary serialization with `BinWriter`/`BinReader`
+- JSON serialization with `JSONWriter`/`JSONReader`
+- Memory-efficient span-based serialization
+- Custom structure serialization
+- Complex nested data structures
+
 ## License
 
 Enki is distributed under the BSD 3-Clause License. See the [LICENSE](LICENSE) file for more details.
-
-## Contributing
-
-Contributions are welcome! Please ensure your code:
-
-- Follows modern C++ best practices
-- Includes appropriate tests
-- Maintains a clean, readable style
-- Is properly documented where necessary
 
 ## Contact
 
