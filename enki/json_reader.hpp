@@ -105,8 +105,9 @@ namespace enki
         }
       }
 
-      // If i == 1, array is empty
-      if (i == 1)
+      // Check if array is empty
+      const auto inside = input.substr(1, i - 2);
+      if (inside.find_first_not_of(" \t\n\r") == std::string_view::npos)
       {
         return 0;
       }
