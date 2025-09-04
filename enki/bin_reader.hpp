@@ -6,7 +6,7 @@
 #include <span>
 #include <vector>
 
-#if __cpp_exceptions >= 199'711
+#if __cpp_exceptions >= 199711
 #include <stdexcept>
 #else
 #include <cstdlib>
@@ -34,7 +34,7 @@ namespace enki
     {
       if (mCurrentIndex + sizeof(T) > mSpan.size())
       {
-#if __cpp_exceptions >= 199'711
+#if __cpp_exceptions >= 199711
 
         throw std::out_of_range("BinReader out of range read");
 #else

@@ -8,7 +8,7 @@
 #include <span>
 #include <vector>
 
-#if __cpp_exceptions >= 199'711
+#if __cpp_exceptions >= 199711
 #include <stdexcept>
 #else
 #include <cstdlib>
@@ -120,7 +120,7 @@ namespace enki
     {
       if (mCurrentSize + sizeof(T) > mDataSpan.size())
       {
-#if __cpp_exceptions >= 199'711
+#if __cpp_exceptions >= 199711
         throw std::out_of_range("BinSpanWriter out of range write");
 #else
         std::abort();

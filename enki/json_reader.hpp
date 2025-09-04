@@ -14,7 +14,7 @@ namespace enki
 {
   namespace
   {
-    std::string readWord(std::istream &is)
+    [[maybe_unused]] std::string readWord(std::istream &is)
     {
       std::string word;
 
@@ -38,7 +38,7 @@ namespace enki
     }
 
     // Trim whitespace from both ends of a string
-    std::string_view trim(std::string_view s)
+    [[maybe_unused]] std::string_view trim(std::string_view s)
     {
       const size_t start = s.find_first_not_of(" \t\n\r");
       if (start == std::string_view::npos)
@@ -49,7 +49,7 @@ namespace enki
       return s.substr(start, end - start + 1);
     }
 
-    int32_t countJsonArrayElements(std::string_view rawInput)
+    [[maybe_unused]] int32_t countJsonArrayElements(std::string_view rawInput)
     {
       const std::string_view input = trim(rawInput);
 
