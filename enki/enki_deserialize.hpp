@@ -14,9 +14,7 @@ namespace enki
   {
     template <typename T, typename Reader>
     concept immediately_readable = requires(Reader r, T &v) {
-      {
-        r.read(v)
-      } -> std::same_as<enki::Success>;
+      { r.read(v) } -> std::same_as<enki::Success>;
     };
 
     template <typename T, typename Reader, size_t... idx>
@@ -213,7 +211,7 @@ namespace enki
           return false;
         }
       }
-      typename Reg::value_type temp{};
+      typename Reg::value_type temp = typename Reg::value_type();
       if (!isGood.update(deserialize(temp, reader)))
       {
         return false;
@@ -264,7 +262,7 @@ namespace enki
         {
           return false;
         }
-        Alternative toDeserialize;
+        Alternative toDeserialize = Alternative();
         if (isGood.update(deserialize(toDeserialize, r)))
         {
           value = std::move(toDeserialize);

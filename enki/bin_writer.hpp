@@ -89,6 +89,11 @@ namespace enki
       return mData;
     }
 
+    std::vector<std::byte> &data()
+    {
+      return mData;
+    }
+
     void reserve(size_t capacity)
     {
       mData.reserve(capacity);
