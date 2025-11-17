@@ -193,7 +193,7 @@ namespace enki
 
     constexpr Success rangeBegin(size_t &numElements)
     {
-      numElements = countJsonArrayElements(mStream.view().substr(mStream.tellg()));
+      numElements = countJsonArrayElements(mStream.str().substr(mStream.tellg()));
 
       char junk{};
       mStream >> junk; // Remove '['
