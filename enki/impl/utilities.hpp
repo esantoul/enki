@@ -77,7 +77,7 @@ namespace enki
     }
 
     static constexpr void
-    setter(concepts::detail::MemberPointer<member>::class_type &inst, const auto &val)
+    setter(typename concepts::detail::MemberPointer<member>::class_type &inst, const auto &val)
     {
       inst.*member = val;
     }
@@ -104,7 +104,7 @@ namespace enki
     }
 
     static constexpr void
-    setter(concepts::detail::MemberPointer<member>::class_type &inst, const auto &val)
+    setter(typename concepts::detail::MemberPointer<member>::class_type &inst, const auto &val)
     {
       inst.*member = val;
     }
