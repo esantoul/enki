@@ -10,11 +10,13 @@
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/success.hpp"
 
-#if defined(__cpp_lib_stringstream_view) && __cpp_lib_stringstream_view >= 202'202L
+// clang-format off
+#if defined(__cpp_lib_stringstream_view) && __cpp_lib_stringstream_view >= 202202L
 #define HAS_STRINGSTREAM_VIEW 1
 #else
 #define HAS_STRINGSTREAM_VIEW 0
 #endif
+// clang-format on
 
 namespace enki
 {
