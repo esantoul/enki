@@ -8,7 +8,7 @@ enable_language(CXX C)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/enki_cmake_definitions.cmake)
 
-file(TOUCH ${CMAKE_CURRENT_BINARY_DIR}/dummy.cpp)
+file(TOUCH ${CMAKE_CURRENT_BINARY_DIR}/dummy.cpp "namespace enki { void enki_dummy_symbol() {} }")
 
 add_library(enki STATIC)
 
