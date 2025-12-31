@@ -504,3 +504,132 @@ TEST_CASE("Forward compat - vector of variants", "[policy][edge_case]")
   REQUIRE(std::get<double>(deserialized[1]) == 2.0);
   REQUIRE(std::get<int>(deserialized[2]) == 3);
 }
+
+// =============================================================================
+// Section J: Nested Variant Tests
+// =============================================================================
+
+TEST_CASE("Strict - nested variant roundtrip", "[policy][strict][nested_variant]")
+{
+  enki::BinWriter<enki::strict_t> writer;
+
+  using InnerVariant = std::variant<char, double>;
+  using OuterVariant = std::variant<int, InnerVariant>;
+
+  OuterVariant value = InnerVariant{'X'};
+  const auto serRes = enki::serialize(value, writer);
+  REQUIRE(serRes);
+
+  OuterVariant deserialized;
+  const auto desRes =
+    enki::deserialize(deserialized, enki::BinSpanReader<enki::strict_t>(writer.data()));
+  REQUIRE(desRes);
+  REQUIRE(std::holds_alternative<InnerVariant>(deserialized));
+  REQUIRE(std::get<char>(std::get<InnerVariant>(deserialized)) == 'X');
+}
+
+TEST_CASE("Strict - nested variant unknown outer index returns error", "[policy][strict][nested_variant]")
+{
+  // Manually create data with invalid outer index
+  std::vector<std::byte> data(12);
+  uint32_t invalidIndex = 99;
+  std::memcpy(data.data(), &invalidIndex, sizeof(invalidIndex));
+
+  using InnerVariant = std::variant<char, double>;
+  using OuterVariant = std::variant<int, InnerVariant>;
+
+  OuterVariant value;
+  const auto desRes = enki::deserialize(value, enki::BinSpanReader<enki::strict_t>(data));
+  REQUIRE_FALSE(desRes);
+}
+
+TEST_CASE("Forward compat - nested variant roundtrip", "[policy][forward_compat][nested_variant]")
+{
+  enki::BinWriter<enki::forward_compat_t> writer;
+
+  using InnerVariant = std::variant<char, double>;
+  using OuterVariant = std::variant<int, InnerVariant>;
+
+  OuterVariant value = InnerVariant{3.14};
+  const auto serRes = enki::serialize(value, writer);
+  REQUIRE(serRes);
+
+  OuterVariant deserialized;
+  const auto desRes =
+    enki::deserialize(deserialized, enki::BinSpanReader<enki::forward_compat_t>(writer.data()));
+  REQUIRE(desRes);
+  REQUIRE(std::holds_alternative<InnerVariant>(deserialized));
+  REQUIRE(std::get<double>(std::get<InnerVariant>(deserialized)) == 3.14);
+}
+
+TEST_CASE(
+  "Forward compat - nested variant unknown outer index with monostate",
+  "[policy][forward_compat][nested_variant]")
+{
+  // New version has more outer alternatives
+  using NewInner = std::variant<char, double>;
+  using NewOuter = std::variant<int, NewInner, std::string>;
+
+  enki::BinWriter<enki::forward_compat_t> writer;
+  NewOuter newValue = std::string("unknown");
+  const auto serRes = enki::serialize(newValue, writer);
+  REQUIRE(serRes);
+
+  // Old version doesn't know about string, has monostate fallback
+  using OldInner = std::variant<char, double>;
+  using OldOuter = std::variant<int, OldInner, std::monostate>;
+
+  OldOuter oldValue = 42;
+  const auto desRes =
+    enki::deserialize(oldValue, enki::BinSpanReader<enki::forward_compat_t>(writer.data()));
+  REQUIRE(desRes);
+  REQUIRE(std::holds_alternative<std::monostate>(oldValue));
+}
+
+TEST_CASE(
+  "Forward compat - nested variant unknown inner index with monostate",
+  "[policy][forward_compat][nested_variant]")
+{
+  // New version has more inner alternatives
+  using NewInner = std::variant<char, double, std::string>;
+  using NewOuter = std::variant<int, NewInner>;
+
+  enki::BinWriter<enki::forward_compat_t> writer;
+  NewOuter newValue = NewInner{std::string("unknown")};
+  const auto serRes = enki::serialize(newValue, writer);
+  REQUIRE(serRes);
+
+  // Old version has fewer inner alternatives, with monostate fallback
+  using OldInner = std::variant<char, double, std::monostate>;
+  using OldOuter = std::variant<int, OldInner>;
+
+  OldOuter oldValue = 42;
+  const auto desRes =
+    enki::deserialize(oldValue, enki::BinSpanReader<enki::forward_compat_t>(writer.data()));
+  REQUIRE(desRes);
+  REQUIRE(std::holds_alternative<OldInner>(oldValue));
+  REQUIRE(std::holds_alternative<std::monostate>(std::get<OldInner>(oldValue)));
+}
+
+TEST_CASE(
+  "Forward compat - nested variant unknown inner index without monostate returns error",
+  "[policy][forward_compat][nested_variant]")
+{
+  // New version has more inner alternatives
+  using NewInner = std::variant<char, double, std::string>;
+  using NewOuter = std::variant<int, NewInner>;
+
+  enki::BinWriter<enki::forward_compat_t> writer;
+  NewOuter newValue = NewInner{std::string("unknown")};
+  const auto serRes = enki::serialize(newValue, writer);
+  REQUIRE(serRes);
+
+  // Old version has no monostate in inner variant
+  using OldInner = std::variant<char, double>;
+  using OldOuter = std::variant<int, OldInner>;
+
+  OldOuter oldValue = 42;
+  const auto desRes =
+    enki::deserialize(oldValue, enki::BinSpanReader<enki::forward_compat_t>(writer.data()));
+  REQUIRE_FALSE(desRes);
+}

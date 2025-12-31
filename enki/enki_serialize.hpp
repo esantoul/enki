@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <limits>
 
-#include "enki/bin_probe.hpp"
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/policies.hpp"
 #include "enki/impl/success.hpp"
@@ -149,34 +148,20 @@ namespace enki
         return isGood;
       }
 
-      // For forward_compat policy with binary writers, write size before data
+      // For forward_compat policy, use writeSkippable to handle size prefix
       // This enables skipping unknown variant alternatives during deserialization
-      if constexpr (
-        std::is_same_v<Policy, forward_compat_t> &&
-        std::remove_cvref_t<Writer>::requires_size_prefix_for_forward_compatibility)
+      if constexpr (std::is_same_v<Policy, forward_compat_t>)
       {
         std::visit(
           detail::Overloaded{
             [&isGood, &w](const std::monostate &) {
               // Write size 0 for monostate (no data to follow)
-              isGood.update(serialize(static_cast<SizeType>(0), w));
+              isGood.update(w.writeSkippable([](auto &&) { return Success{}; }));
             },
             [&isGood, &w](const auto &v) {
-              // First, probe to get size
-              BinProbe<Policy, SizeType> probe;
-              Success probeResult = serialize(v, probe);
-              if (!probeResult)
-              {
-                isGood.update(probeResult);
-                return;
-              }
-              // Write size
-              if (!isGood.update(serialize(static_cast<SizeType>(probeResult.size()), w)))
-              {
-                return;
-              }
-              // Write actual data
-              isGood.update(serialize(v, w));
+              isGood.update(w.writeSkippable([&v](auto &&writer) {
+                return serialize(v, std::forward<decltype(writer)>(writer));
+              }));
             }},
           value);
       }

@@ -19,10 +19,9 @@ namespace enki
   class JSONWriter
   {
   public:
-    using policy_type = Policy;                                                     // NOLINT
-    using size_type = uint32_t;                                                     // NOLINT
-    static constexpr bool serialize_custom_names = true;                            // NOLINT
-    static constexpr bool requires_size_prefix_for_forward_compatibility = false;   // NOLINT
+    using policy_type = Policy;                          // NOLINT
+    using size_type = uint32_t;                          // NOLINT
+    static constexpr bool serialize_custom_names = true; // NOLINT
 
     constexpr Success write(const bool v)
     {
@@ -120,6 +119,13 @@ namespace enki
     const std::stringstream &data() const
     {
       return mStream;
+    }
+
+    /// Write skippable content - JSON is self-describing, just passes through
+    template <typename WriteFunc>
+    constexpr Success writeSkippable(WriteFunc &&writeContent)
+    {
+      return writeContent(*this);
     }
 
   private:

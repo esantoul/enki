@@ -14,6 +14,7 @@
 #include <cstdlib>
 #endif
 
+#include "enki/bin_probe.hpp"
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/policies.hpp"
 #include "enki/impl/success.hpp"
@@ -24,10 +25,9 @@ namespace enki
   class BinWriter
   {
   public:
-    using policy_type = Policy;                                                    // NOLINT
-    using size_type = SizeType;                                                    // NOLINT
-    static constexpr bool serialize_custom_names = false;                          // NOLINT
-    static constexpr bool requires_size_prefix_for_forward_compatibility = true;   // NOLINT
+    using policy_type = Policy;                           // NOLINT
+    using size_type = SizeType;                           // NOLINT
+    static constexpr bool serialize_custom_names = false; // NOLINT
 
     template <concepts::arithmetic_or_enum T>
     constexpr Success write(const T &v)
@@ -107,6 +107,29 @@ namespace enki
       mData.clear();
     }
 
+    /// Write skippable content with size prefix for forward compatibility
+    template <typename WriteFunc>
+    constexpr Success writeSkippable(WriteFunc &&writeContent)
+    {
+      // Probe phase to calculate size
+      BinProbe<policy_type, size_type> probe;
+      Success probeResult = writeContent(probe);
+      if (!probeResult)
+      {
+        return probeResult;
+      }
+
+      // Write size prefix
+      Success result = write(static_cast<size_type>(probeResult.size()));
+      if (!result)
+      {
+        return result;
+      }
+
+      // Write actual data
+      return result.update(writeContent(*this));
+    }
+
   private:
     std::vector<std::byte> mData;
   };
@@ -115,10 +138,9 @@ namespace enki
   class BinSpanWriter
   {
   public:
-    using policy_type = Policy;                                                    // NOLINT
-    using size_type = SizeType;                                                    // NOLINT
-    static constexpr bool serialize_custom_names = false;                          // NOLINT
-    static constexpr bool requires_size_prefix_for_forward_compatibility = true;   // NOLINT
+    using policy_type = Policy;                           // NOLINT
+    using size_type = SizeType;                           // NOLINT
+    static constexpr bool serialize_custom_names = false; // NOLINT
 
     BinSpanWriter(std::span<std::byte> byteSpan) :
       mDataSpan(byteSpan)
@@ -198,6 +220,29 @@ namespace enki
     std::span<const std::byte> data() const
     {
       return mDataSpan.subspan(0, mCurrentSize);
+    }
+
+    /// Write skippable content with size prefix for forward compatibility
+    template <typename WriteFunc>
+    constexpr Success writeSkippable(WriteFunc &&writeContent)
+    {
+      // Probe phase to calculate size
+      BinProbe<policy_type, size_type> probe;
+      Success probeResult = writeContent(probe);
+      if (!probeResult)
+      {
+        return probeResult;
+      }
+
+      // Write size prefix
+      Success result = write(static_cast<size_type>(probeResult.size()));
+      if (!result)
+      {
+        return result;
+      }
+
+      // Write actual data
+      return result.update(writeContent(*this));
     }
 
   private:

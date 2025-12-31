@@ -16,10 +16,9 @@ namespace enki
   class BinProbe
   {
   public:
-    using policy_type = Policy;                                                    // NOLINT
-    using size_type = SizeType;                                                    // NOLINT
-    static constexpr bool serialize_custom_names = false;                          // NOLINT
-    static constexpr bool requires_size_prefix_for_forward_compatibility = true;   // NOLINT
+    using policy_type = Policy;                           // NOLINT
+    using size_type = SizeType;                           // NOLINT
+    static constexpr bool serialize_custom_names = false; // NOLINT
 
     template <concepts::arithmetic_or_enum T>
     constexpr Success write(const T &)
@@ -75,6 +74,19 @@ namespace enki
     constexpr Success objectName(std::string_view /* name */) const
     {
       return {};
+    }
+
+    /// Write skippable content - probes content and adds size field overhead
+    template <typename WriteFunc>
+    constexpr Success writeSkippable(WriteFunc &&writeContent)
+    {
+      Success probeResult = writeContent(*this);
+      if (!probeResult)
+      {
+        return probeResult;
+      }
+      // Add size field overhead to total
+      return {sizeof(size_type) + probeResult.size()};
     }
   };
 } // namespace enki
