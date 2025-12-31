@@ -16,9 +16,10 @@ namespace enki
   class BinProbe
   {
   public:
-    using policy_type = Policy;                           // NOLINT
-    using size_type = SizeType;                           // NOLINT
-    static constexpr bool serialize_custom_names = false; // NOLINT
+    using policy_type = Policy;                                                    // NOLINT
+    using size_type = SizeType;                                                    // NOLINT
+    static constexpr bool serialize_custom_names = false;                          // NOLINT
+    static constexpr bool requires_size_prefix_for_forward_compatibility = true;   // NOLINT
 
     template <concepts::arithmetic_or_enum T>
     constexpr Success write(const T &)

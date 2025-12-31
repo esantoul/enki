@@ -153,11 +153,14 @@ namespace enki
       // This enables skipping unknown variant alternatives during deserialization
       if constexpr (
         std::is_same_v<Policy, forward_compat_t> &&
-        !std::remove_cvref_t<Writer>::serialize_custom_names)
+        std::remove_cvref_t<Writer>::requires_size_prefix_for_forward_compatibility)
       {
         std::visit(
           detail::Overloaded{
-            [](const std::monostate &) {},
+            [&isGood, &w](const std::monostate &) {
+              // Write size 0 for monostate (no data to follow)
+              isGood.update(serialize(static_cast<SizeType>(0), w));
+            },
             [&isGood, &w](const auto &v) {
               // First, probe to get size
               BinProbe<Policy, SizeType> probe;

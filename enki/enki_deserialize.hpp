@@ -195,7 +195,7 @@ namespace enki
       // Known index - for forward_compat, skip the size field first
       if constexpr (
         std::is_same_v<Policy, forward_compat_t> &&
-        !std::remove_cvref_t<Reader>::serialize_custom_names)
+        std::remove_cvref_t<Reader>::requires_size_prefix_for_forward_compatibility)
       {
         SizeType dataSize{};
         isGood.update(deserialize(dataSize, r));

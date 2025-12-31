@@ -129,8 +129,10 @@ namespace enki
   class JSONReader
   {
   public:
-    using policy_type = Policy;                          // NOLINT
-    static constexpr bool serialize_custom_names = true; // NOLINT
+    using policy_type = Policy;                                                     // NOLINT
+    using size_type = uint32_t;                                                     // NOLINT
+    static constexpr bool serialize_custom_names = true;                            // NOLINT
+    static constexpr bool requires_size_prefix_for_forward_compatibility = false;   // NOLINT
 
     JSONReader(std::string_view sv)
     {
