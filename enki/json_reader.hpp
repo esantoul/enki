@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include "enki/impl/concepts.hpp"
+#include "enki/impl/policies.hpp"
 #include "enki/impl/success.hpp"
 
 // clang-format off
@@ -124,10 +125,11 @@ namespace enki
     }
   } // namespace
 
-  template <typename SizeType = uint32_t>
+  template <typename Policy = strict_t>
   class JSONReader
   {
   public:
+    using policy_type = Policy;                          // NOLINT
     static constexpr bool serialize_custom_names = true; // NOLINT
 
     JSONReader(std::string_view sv)
@@ -175,6 +177,110 @@ namespace enki
     constexpr Success read(std::string &str)
     {
       mStream >> std::quoted(str);
+      return {};
+    }
+
+    /// Skip a JSON value - parses and discards current value
+    /// Used for forward compatibility when encountering unknown variant types
+    Success skipValue()
+    {
+      // Skip whitespace
+      mStream >> std::ws;
+
+      int ch = mStream.peek();
+      if (ch == std::char_traits<char>::eof())
+      {
+        return "Unexpected end of JSON";
+      }
+
+      char c = static_cast<char>(ch);
+
+      if (c == '{' || c == '[')
+      {
+        // Object or array - need to match braces/brackets
+        char openBrace = c;
+        char closeBrace = (c == '{') ? '}' : ']';
+        mStream.get(); // consume opening brace
+
+        int depth = 1;
+        bool inString = false;
+        bool escape = false;
+
+        while (depth > 0 && mStream.peek() != std::char_traits<char>::eof())
+        {
+          char cur = static_cast<char>(mStream.get());
+
+          if (escape)
+          {
+            escape = false;
+            continue;
+          }
+
+          if (cur == '\\' && inString)
+          {
+            escape = true;
+            continue;
+          }
+
+          if (cur == '"')
+          {
+            inString = !inString;
+            continue;
+          }
+
+          if (!inString)
+          {
+            if (cur == openBrace)
+            {
+              depth++;
+            }
+            else if (cur == closeBrace)
+            {
+              depth--;
+            }
+          }
+        }
+      }
+      else if (c == '"')
+      {
+        // String - read until closing quote
+        std::string dummy;
+        mStream >> std::quoted(dummy);
+      }
+      else if (c == 't' || c == 'f')
+      {
+        // Boolean
+        readWord(mStream);
+      }
+      else if (c == 'n')
+      {
+        // null
+        readWord(mStream);
+      }
+      else if (c == '-' || std::isdigit(static_cast<unsigned char>(c)))
+      {
+        // Number - read until non-numeric character
+        while (mStream.peek() != std::char_traits<char>::eof())
+        {
+          int next = mStream.peek();
+          char nc = static_cast<char>(next);
+          if (
+            nc == '-' || nc == '+' || nc == '.' || nc == 'e' || nc == 'E' ||
+            std::isdigit(static_cast<unsigned char>(nc)))
+          {
+            mStream.get();
+          }
+          else
+          {
+            break;
+          }
+        }
+      }
+      else
+      {
+        return "Invalid JSON value";
+      }
+
       return {};
     }
 

@@ -10,14 +10,16 @@
 #include <type_traits>
 
 #include "enki/impl/concepts.hpp"
+#include "enki/impl/policies.hpp"
 #include "enki/impl/success.hpp"
 
 namespace enki
 {
-  template <typename SizeType = uint32_t>
+  template <typename Policy = strict_t>
   class JSONWriter
   {
   public:
+    using policy_type = Policy;                          // NOLINT
     static constexpr bool serialize_custom_names = true; // NOLINT
 
     constexpr Success write(const bool v)

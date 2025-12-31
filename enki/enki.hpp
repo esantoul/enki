@@ -5,6 +5,7 @@
 #include "enki/bin_writer.hpp"
 #include "enki/enki_deserialize.hpp"
 #include "enki/enki_serialize.hpp"
+#include "enki/impl/policies.hpp"
 #include "enki/json_reader.hpp"
 #include "enki/json_writer.hpp"
 

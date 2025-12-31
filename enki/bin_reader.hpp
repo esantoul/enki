@@ -13,14 +13,16 @@
 #endif
 
 #include "enki/impl/concepts.hpp"
+#include "enki/impl/policies.hpp"
 #include "enki/impl/success.hpp"
 
 namespace enki
 {
-  template <typename SizeType = uint32_t>
+  template <typename Policy = strict_t, typename SizeType = uint32_t>
   class BinSpanReader
   {
   public:
+    using policy_type = Policy;                           // NOLINT
     using size_type = SizeType;                           // NOLINT
     static constexpr bool serialize_custom_names = false; // NOLINT
 
@@ -44,6 +46,29 @@ namespace enki
       std::memcpy(&v, mSpan.data() + mCurrentIndex, sizeof(T));
       mCurrentIndex += sizeof(T);
       return {sizeof(T)};
+    }
+
+    /// Skip a value - reads embedded size then skips that many bytes
+    /// Used for forward compatibility when encountering unknown variant types
+    constexpr Success skipValue()
+    {
+      SizeType size{};
+      Success result = read(size);
+      if (!result)
+      {
+        return result;
+      }
+
+      if (mCurrentIndex + size > mSpan.size())
+      {
+#if __cpp_exceptions >= 199711
+        throw std::out_of_range("BinReader skipValue out of range");
+#else
+        std::abort();
+#endif
+      }
+      mCurrentIndex += size;
+      return {sizeof(SizeType) + size};
     }
 
     constexpr Success arrayBegin() const
@@ -114,20 +139,22 @@ namespace enki
     size_t mCurrentIndex{};
   };
 
-  template <typename SizeType = uint32_t>
-  class BinReader : public BinSpanReader<SizeType>
+  template <typename Policy = strict_t, typename SizeType = uint32_t>
+  class BinReader : public BinSpanReader<Policy, SizeType>
   {
   public:
-    using size_type = typename BinSpanReader<SizeType>::size_type; // NOLINT
+    using policy_type = typename BinSpanReader<Policy, SizeType>::policy_type; // NOLINT
+    using size_type = typename BinSpanReader<Policy, SizeType>::size_type;     // NOLINT
 
     BinReader(std::span<const std::byte> data) :
-      BinSpanReader<>({}),
+      BinSpanReader<Policy, SizeType>({}),
       mData(std::begin(data), std::end(data))
     {
-      static_cast<BinSpanReader<> &>(*this) = {mData};
+      static_cast<BinSpanReader<Policy, SizeType> &>(*this) = {mData};
     }
 
-    using BinSpanReader<>::read;
+    using BinSpanReader<Policy, SizeType>::read;
+    using BinSpanReader<Policy, SizeType>::skipValue;
 
   private:
     std::vector<std::byte> mData;

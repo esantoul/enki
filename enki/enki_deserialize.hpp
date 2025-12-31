@@ -2,9 +2,11 @@
 #define ENKI_ENKI_DESERIALIZE_HPP
 
 #include <algorithm>
+#include <optional>
 #include <vector>
 
 #include "enki/impl/concepts.hpp"
+#include "enki/impl/policies.hpp"
 #include "enki/impl/success.hpp"
 #include "enki/impl/utilities.hpp"
 
@@ -16,6 +18,27 @@ namespace enki
     concept immediately_readable = requires(Reader r, T &v) {
       { r.read(v) } -> std::same_as<enki::Success>;
     };
+
+    /// Find the index of std::monostate in a variant, if present
+    template <typename T, size_t I = 0>
+    constexpr std::optional<size_t> monostate_index()
+    {
+      if constexpr (I >= std::variant_size_v<T>)
+      {
+        return std::nullopt;
+      }
+      else if constexpr (std::is_same_v<std::variant_alternative_t<I, T>, std::monostate>)
+      {
+        return I;
+      }
+      else
+      {
+        return monostate_index<T, I + 1>();
+      }
+    }
+
+    template <typename T>
+    constexpr bool has_monostate_v = monostate_index<T>().has_value();
 
     template <typename T, typename Reader, size_t... idx>
     constexpr Success deserializeTupleLike(T &value, Reader &&reader, std::index_sequence<idx...>);
@@ -128,7 +151,10 @@ namespace enki
     }
     else if constexpr (concepts::variant_like<T>)
     {
-      typename std::remove_cvref_t<Reader>::size_type index = -1;
+      using Policy = typename std::remove_cvref_t<Reader>::policy_type;
+      using SizeType = typename std::remove_cvref_t<Reader>::size_type;
+
+      SizeType index = static_cast<SizeType>(-1);
 
       Success isGood = deserialize(index, r);
       if (!isGood)
@@ -138,7 +164,47 @@ namespace enki
 
       if (index >= std::variant_size_v<T>)
       {
-        return isGood.update("Deserialized variant index is out of range");
+        // Unknown variant index
+        if constexpr (std::is_same_v<Policy, forward_compat_t>)
+        {
+          // Skip the unknown data
+          isGood.update(r.skipValue());
+          if (!isGood)
+          {
+            return isGood;
+          }
+
+          // Set to monostate if available
+          if constexpr (detail::has_monostate_v<T>)
+          {
+            constexpr size_t mono_idx = *detail::monostate_index<T>();
+            value.template emplace<mono_idx>();
+            return isGood;
+          }
+          else
+          {
+            return isGood.update("Unknown variant index: no monostate alternative available");
+          }
+        }
+        else
+        {
+          return isGood.update("Deserialized variant index is out of range");
+        }
+      }
+
+      // Known index - for forward_compat, skip the size field first
+      if constexpr (
+        std::is_same_v<Policy, forward_compat_t> &&
+        !std::remove_cvref_t<Reader>::serialize_custom_names)
+      {
+        SizeType dataSize{};
+        isGood.update(deserialize(dataSize, r));
+        if (!isGood)
+        {
+          return isGood;
+        }
+        // dataSize is not used here, just consumed from stream
+        static_cast<void>(dataSize);
       }
 
       isGood.update(detail::deserializeVariantLike(

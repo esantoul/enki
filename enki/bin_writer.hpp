@@ -15,14 +15,16 @@
 #endif
 
 #include "enki/impl/concepts.hpp"
+#include "enki/impl/policies.hpp"
 #include "enki/impl/success.hpp"
 
 namespace enki
 {
-  template <typename SizeType = uint32_t>
+  template <typename Policy = strict_t, typename SizeType = uint32_t>
   class BinWriter
   {
   public:
+    using policy_type = Policy;                           // NOLINT
     using size_type = SizeType;                           // NOLINT
     static constexpr bool serialize_custom_names = false; // NOLINT
 
@@ -108,10 +110,11 @@ namespace enki
     std::vector<std::byte> mData;
   };
 
-  template <typename SizeType = uint32_t>
+  template <typename Policy = strict_t, typename SizeType = uint32_t>
   class BinSpanWriter
   {
   public:
+    using policy_type = Policy;                           // NOLINT
     using size_type = SizeType;                           // NOLINT
     static constexpr bool serialize_custom_names = false; // NOLINT
 

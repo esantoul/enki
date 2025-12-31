@@ -4,7 +4,9 @@
 #include <algorithm>
 #include <limits>
 
+#include "enki/bin_probe.hpp"
 #include "enki/impl/concepts.hpp"
+#include "enki/impl/policies.hpp"
 #include "enki/impl/success.hpp"
 #include "enki/impl/utilities.hpp"
 
@@ -128,6 +130,7 @@ namespace enki
     }
     else if constexpr (concepts::variant_like<T>)
     {
+      using Policy = typename std::remove_cvref_t<Writer>::policy_type;
       using SizeType = typename std::remove_cvref_t<Writer>::size_type;
 
       if (value.index() > std::numeric_limits<SizeType>::max())
@@ -146,11 +149,42 @@ namespace enki
         return isGood;
       }
 
-      std::visit(
-        detail::Overloaded{
-          [](const std::monostate &) {},
-          [&isGood, &w](const auto &v) { isGood.update(serialize(v, w)); }},
-        value);
+      // For forward_compat policy with binary writers, write size before data
+      // This enables skipping unknown variant alternatives during deserialization
+      if constexpr (
+        std::is_same_v<Policy, forward_compat_t> &&
+        !std::remove_cvref_t<Writer>::serialize_custom_names)
+      {
+        std::visit(
+          detail::Overloaded{
+            [](const std::monostate &) {},
+            [&isGood, &w](const auto &v) {
+              // First, probe to get size
+              BinProbe<Policy, SizeType> probe;
+              Success probeResult = serialize(v, probe);
+              if (!probeResult)
+              {
+                isGood.update(probeResult);
+                return;
+              }
+              // Write size
+              if (!isGood.update(serialize(static_cast<SizeType>(probeResult.size()), w)))
+              {
+                return;
+              }
+              // Write actual data
+              isGood.update(serialize(v, w));
+            }},
+          value);
+      }
+      else
+      {
+        std::visit(
+          detail::Overloaded{
+            [](const std::monostate &) {},
+            [&isGood, &w](const auto &v) { isGood.update(serialize(v, w)); }},
+          value);
+      }
 
       return isGood;
     }
