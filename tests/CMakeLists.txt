@@ -34,6 +34,9 @@ option(ENKI_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSani
 # Optional code coverage support
 option(ENKI_ENABLE_COVERAGE "Enable code coverage reporting" OFF)
 
+# Optional benchmark support
+option(ENKI_ENABLE_BENCHMARKS "Build performance benchmarks" OFF)
+
 add_executable(enki_tests)
 
 set_target_properties(enki_tests PROPERTIES
@@ -99,3 +102,24 @@ catch_discover_tests(enki_tests)
 
 add_custom_target(enki_tests_run ALL ctest --output-on-failure)
 add_dependencies(enki_tests_run enki_tests)
+
+# Benchmark executable (separate from tests)
+if(ENKI_ENABLE_BENCHMARKS)
+  add_executable(enki_benchmarks
+    ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/serdes_benchmarks.cpp
+  )
+
+  set_target_properties(enki_benchmarks PROPERTIES
+    ${ENKI_COMMON_PROPERTIES}
+  )
+
+  target_link_libraries(enki_benchmarks PRIVATE
+    enki
+    Catch2::Catch2WithMain
+  )
+
+  target_compile_options(enki_benchmarks PRIVATE
+    ${ENKI_COMMON_COMPILE_OPTIONS}
+    -O3  # Optimize for realistic benchmark measurements
+  )
+endif()
