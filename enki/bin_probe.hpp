@@ -21,6 +21,9 @@ namespace enki
     using size_type = SizeType;                           // NOLINT
     static constexpr bool serialize_custom_names = false; // NOLINT
 
+    BinProbe() = default;
+    explicit constexpr BinProbe(Policy) {}
+
     template <concepts::arithmetic_or_enum T>
     constexpr Success write(const T &)
     {
@@ -119,6 +122,11 @@ namespace enki
       }
     }
   };
+
+  // Deduction guides for BinProbe
+  BinProbe() -> BinProbe<strict_t, uint32_t>;
+  BinProbe(strict_t) -> BinProbe<strict_t, uint32_t>;
+  BinProbe(forward_compatible_t) -> BinProbe<forward_compatible_t, uint32_t>;
 } // namespace enki
 
 #endif // ENKI_BIN_PROBE_HPP

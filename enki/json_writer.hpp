@@ -24,6 +24,9 @@ namespace enki
     using size_type = uint32_t;                          // NOLINT
     static constexpr bool serialize_custom_names = true; // NOLINT
 
+    JSONWriter() = default;
+    explicit constexpr JSONWriter(Policy) {}
+
     constexpr Success write(const bool v)
     {
       mStream << (v ? "true" : "false");
@@ -158,6 +161,11 @@ namespace enki
   private:
     std::stringstream mStream;
   };
+
+  // Deduction guides for JSONWriter
+  JSONWriter() -> JSONWriter<strict_t>;
+  JSONWriter(strict_t) -> JSONWriter<strict_t>;
+  JSONWriter(forward_compatible_t) -> JSONWriter<forward_compatible_t>;
 } // namespace enki
 
 #endif // ENKI_JSON_WRITER_HPP

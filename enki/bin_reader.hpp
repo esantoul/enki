@@ -32,6 +32,11 @@ namespace enki
     {
     }
 
+    explicit BinSpanReader(Policy, std::span<const std::byte> data) :
+      mSpan(data)
+    {
+    }
+
     template <concepts::arithmetic_or_enum T>
     constexpr Success read(T &v)
     {
@@ -179,6 +184,13 @@ namespace enki
       static_cast<BinSpanReader<Policy, SizeType> &>(*this) = {mData};
     }
 
+    explicit BinReader(Policy, std::span<const std::byte> data) :
+      BinSpanReader<Policy, SizeType>({}),
+      mData(std::begin(data), std::end(data))
+    {
+      static_cast<BinSpanReader<Policy, SizeType> &>(*this) = {mData};
+    }
+
     using BinSpanReader<Policy, SizeType>::read;
     using BinSpanReader<Policy, SizeType>::skipHint;
     using BinSpanReader<Policy, SizeType>::skipHintAndValue;
@@ -188,6 +200,17 @@ namespace enki
   private:
     std::vector<std::byte> mData;
   };
+
+  // Deduction guides for BinSpanReader
+  BinSpanReader(std::span<const std::byte>) -> BinSpanReader<strict_t, uint32_t>;
+  BinSpanReader(strict_t, std::span<const std::byte>) -> BinSpanReader<strict_t, uint32_t>;
+  BinSpanReader(forward_compatible_t, std::span<const std::byte>)
+    -> BinSpanReader<forward_compatible_t, uint32_t>;
+
+  // Deduction guides for BinReader
+  BinReader(std::span<const std::byte>) -> BinReader<strict_t, uint32_t>;
+  BinReader(strict_t, std::span<const std::byte>) -> BinReader<strict_t, uint32_t>;
+  BinReader(forward_compatible_t, std::span<const std::byte>) -> BinReader<forward_compatible_t, uint32_t>;
 } // namespace enki
 
 #endif // ENKI_BIN_READER_HPP

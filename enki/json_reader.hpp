@@ -139,6 +139,11 @@ namespace enki
       mStream << sv;
     }
 
+    explicit JSONReader(Policy, std::string_view sv)
+    {
+      mStream << sv;
+    }
+
     constexpr Success read(bool &v)
     {
       std::string val = readWord(mStream);
@@ -441,6 +446,11 @@ namespace enki
   private:
     std::stringstream mStream;
   };
+
+  // Deduction guides for JSONReader
+  JSONReader(std::string_view) -> JSONReader<strict_t>;
+  JSONReader(strict_t, std::string_view) -> JSONReader<strict_t>;
+  JSONReader(forward_compatible_t, std::string_view) -> JSONReader<forward_compatible_t>;
 } // namespace enki
 
 #endif // ENKI_JSON_READER_HPP

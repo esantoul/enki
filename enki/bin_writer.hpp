@@ -30,6 +30,9 @@ namespace enki
     using size_type = SizeType;                           // NOLINT
     static constexpr bool serialize_custom_names = false; // NOLINT
 
+    BinWriter() = default;
+    explicit constexpr BinWriter(Policy) {}
+
     template <concepts::arithmetic_or_enum T>
     constexpr Success write(const T &v)
     {
@@ -177,6 +180,11 @@ namespace enki
     {
     }
 
+    explicit BinSpanWriter(Policy, std::span<std::byte> byteSpan) :
+      mDataSpan(byteSpan)
+    {
+    }
+
     template <concepts::arithmetic_or_enum T>
     constexpr Success write(const T &v)
     {
@@ -308,6 +316,16 @@ namespace enki
     std::span<std::byte> mDataSpan;
     size_t mCurrentSize = 0;
   };
+
+  // Deduction guides for BinWriter
+  BinWriter() -> BinWriter<strict_t, uint32_t>;
+  BinWriter(strict_t) -> BinWriter<strict_t, uint32_t>;
+  BinWriter(forward_compatible_t) -> BinWriter<forward_compatible_t, uint32_t>;
+
+  // Deduction guides for BinSpanWriter
+  BinSpanWriter(std::span<std::byte>) -> BinSpanWriter<strict_t, uint32_t>;
+  BinSpanWriter(strict_t, std::span<std::byte>) -> BinSpanWriter<strict_t, uint32_t>;
+  BinSpanWriter(forward_compatible_t, std::span<std::byte>) -> BinSpanWriter<forward_compatible_t, uint32_t>;
 } // namespace enki
 
 #endif // ENKI_BIN_WRITER_HPP
