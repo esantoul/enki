@@ -165,6 +165,18 @@ namespace enki
       return {};
     }
 
+    /// Read optional has-value flag from binary format
+    constexpr Success readOptionalHasValue(bool &hasValue)
+    {
+      return read(hasValue);
+    }
+
+    /// Finish reading an optional - no-op for binary format
+    constexpr Success finishOptional()
+    {
+      return {};
+    }
+
   private:
     std::span<const std::byte> mSpan;
     size_t mCurrentIndex{};
@@ -196,6 +208,8 @@ namespace enki
     using BinSpanReader<Policy, SizeType>::skipHintAndValue;
     using BinSpanReader<Policy, SizeType>::readVariantIndex;
     using BinSpanReader<Policy, SizeType>::finishVariant;
+    using BinSpanReader<Policy, SizeType>::readOptionalHasValue;
+    using BinSpanReader<Policy, SizeType>::finishOptional;
 
   private:
     std::vector<std::byte> mData;

@@ -113,16 +113,8 @@ namespace enki
     }
     else if constexpr (concepts::optional_like<T>)
     {
-      Success isGood = serialize(static_cast<bool>(value), w);
-      if (!isGood)
-      {
-        return isGood;
-      }
-      if (value)
-      {
-        isGood.update(serialize(*value, w));
-      }
-      return isGood;
+      return w.writeOptional(
+        static_cast<bool>(value), [&](auto &writer) { return serialize(*value, writer); });
     }
     else if constexpr (concepts::variant_like<T>)
     {

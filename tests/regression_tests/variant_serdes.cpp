@@ -138,18 +138,19 @@ TEST_CASE("JSON strict - known variant index roundtrip", "[variant][strict][json
 {
   enki::JSONWriter<enki::strict_t> writer;
 
-  std::variant<int, double, char> value = 3.14;
+  // Use 1.5 instead of 3.14 because 1.5 can be represented exactly in binary floating-point
+  std::variant<int, double, char> value = 1.5;
   const auto serRes = enki::serialize(value, writer);
   REQUIRE(serRes);
 
   // Verify JSON format is {"index": value}
   std::string json = writer.data().str();
-  REQUIRE(json == R"({"1": 3.14})");
+  REQUIRE(json == R"({"1": 1.5})");
 
   std::variant<int, double, char> deserialized;
   const auto desRes = enki::deserialize(deserialized, enki::JSONReader<enki::strict_t>(json));
   REQUIRE(desRes);
-  REQUIRE(std::get<double>(deserialized) == 3.14);
+  REQUIRE(std::get<double>(deserialized) == 1.5);
 }
 
 TEST_CASE("JSON strict - variant with int value roundtrip", "[variant][strict][json]")

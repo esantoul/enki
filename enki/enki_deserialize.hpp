@@ -129,18 +129,22 @@ namespace enki
     }
     else if constexpr (concepts::optional_like<T>)
     {
-      bool active = false;
-      Success isGood = deserialize(active, r);
+      bool hasValue = false;
+      Success isGood = r.readOptionalHasValue(hasValue);
       if (!isGood)
       {
         return isGood;
       }
-      if (active)
+      if (hasValue)
       {
         typename T::value_type deserializedValue;
         if (isGood.update(deserialize(deserializedValue, r)))
         {
           value = std::move(deserializedValue);
+        }
+        if (isGood)
+        {
+          isGood.update(r.finishOptional());
         }
       }
       else

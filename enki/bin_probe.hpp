@@ -121,6 +121,23 @@ namespace enki
         return {indexResult.size() + valueResult.size()};
       }
     }
+
+    /// Probe an optional: bool flag + value if present
+    template <typename ValueFunc>
+    constexpr Success writeOptional(bool hasValue, ValueFunc &&writeValue)
+    {
+      Success flagResult = write(hasValue);
+      if (!flagResult)
+      {
+        return flagResult;
+      }
+      if (hasValue)
+      {
+        Success valueResult = writeValue(*this);
+        return {flagResult.size() + valueResult.size()};
+      }
+      return flagResult;
+    }
   };
 
   // Deduction guides for BinProbe

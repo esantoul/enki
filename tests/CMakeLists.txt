@@ -49,6 +49,7 @@ target_sources(enki_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/composite_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/conversion_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/policy_forward_compat_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_serdes.cpp
 )
 
 target_include_directories(enki_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

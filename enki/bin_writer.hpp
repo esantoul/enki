@@ -163,6 +163,23 @@ namespace enki
       }
     }
 
+    /// Write an optional: bool flag + value if present
+    template <typename ValueFunc>
+    constexpr Success writeOptional(bool hasValue, ValueFunc &&writeValue)
+    {
+      Success flagResult = write(hasValue);
+      if (!flagResult)
+      {
+        return flagResult;
+      }
+      if (hasValue)
+      {
+        Success valueResult = writeValue(*this);
+        return {flagResult.size() + valueResult.size()};
+      }
+      return flagResult;
+    }
+
   private:
     std::vector<std::byte> mData;
   };
@@ -310,6 +327,23 @@ namespace enki
         Success valueResult = writeValue(*this);
         return {indexResult.size() + valueResult.size()};
       }
+    }
+
+    /// Write an optional: bool flag + value if present
+    template <typename ValueFunc>
+    constexpr Success writeOptional(bool hasValue, ValueFunc &&writeValue)
+    {
+      Success flagResult = write(hasValue);
+      if (!flagResult)
+      {
+        return flagResult;
+      }
+      if (hasValue)
+      {
+        Success valueResult = writeValue(*this);
+        return {flagResult.size() + valueResult.size()};
+      }
+      return flagResult;
     }
 
   private:
