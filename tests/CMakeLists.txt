@@ -37,19 +37,27 @@ set_target_properties(enki_tests PROPERTIES
 target_sources(enki_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/bin_writer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/ctad.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/arithmetic_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/enum_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/array_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/tuple_like_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/optional_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/variant_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/range_constructible_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/map_types_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/custom_type_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/composite_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/conversion_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/policy_forward_compat_serdes.cpp
+  # Binary format tests
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_arithmetic_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_enum_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_array_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_tuple_like_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_optional_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_variant_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_range_constructible_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_map_types_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_custom_type_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_composite_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_conversion_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_forward_compat_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_edge_cases_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_error_handling_serdes.cpp
+  # JSON format tests
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_variant_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_forward_compat_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_edge_cases_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_error_handling_serdes.cpp
 )
 
 target_include_directories(enki_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
