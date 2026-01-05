@@ -322,26 +322,31 @@ TEST_CASE("JSONReader skipHintAndValue - skips null", "[policy][skipHintAndValue
 // Section D: Cross-compatibility Tests
 // =============================================================================
 
-TEST_CASE("Forward compat writer -> Strict reader works for known types", "[policy][cross_compat]")
+TEST_CASE(
+  "Binary policies are NOT cross-compatible - forward_compat writer with strict reader",
+  "[policy][cross_compat]")
 {
-  // Forward compat writer adds size prefix
+  // forward_compatible writes: [index][size][value]
+  // strict expects:            [index][value]
+  // Mixing them causes the strict reader to misinterpret the size field as data
+
   enki::BinWriter<enki::forward_compatible_t> writer;
 
   std::variant<int, double> value = 42;
   const auto serRes = enki::serialize(value, writer);
   REQUIRE(serRes);
 
-  // Strict reader should still work - it just reads the size as part of the data
-  // Actually, this WON'T work correctly because strict reader doesn't expect size prefix
-  // This test documents that behavior
+  // Strict reader will "succeed" but produce WRONG data
   std::variant<int, double> deserialized;
   const auto desRes =
     enki::deserialize(deserialized, enki::BinSpanReader<enki::strict_t>(writer.data()));
 
-  // The strict reader will misinterpret the size field as the actual data
-  // This is expected behavior - format mismatch
-  // Just document that we consumed some bytes
-  REQUIRE(desRes); // It "succeeds" but with wrong data
+  // Deserialization "succeeds" but the value is corrupted
+  // The strict reader interpreted the 4-byte size field as the int value
+  REQUIRE(desRes);
+  REQUIRE(std::holds_alternative<int>(deserialized));
+  REQUIRE(std::get<int>(deserialized) == 4); // Size field (4 bytes), not 42!
+  REQUIRE(std::get<int>(deserialized) != 42);
 }
 
 // =============================================================================

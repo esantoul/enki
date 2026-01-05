@@ -3,7 +3,8 @@
 
 namespace enki
 {
-  /// Strict policy - error on unknown variant indices (current behavior)
+  /// Strict policy (default) - error on unknown variant indices
+  /// Usage: enki::BinWriter writer; or enki::BinWriter writer(enki::strict);
   struct strict_t
   {
   };
@@ -11,6 +12,8 @@ namespace enki
   inline constexpr strict_t strict{};
 
   /// Forward compatibility policy - skip unknown variants, set to monostate
+  /// Usage: enki::BinWriter writer(enki::forward_compatible);
+  /// See docs/forward-compatibility.md for details
   struct forward_compatible_t
   {
   };
