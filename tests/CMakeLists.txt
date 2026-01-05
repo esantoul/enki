@@ -14,7 +14,7 @@ else()
   include(${ENKI_SOURCE_DIR}/cmake/CPM.cmake)
 endif()
 
-if ((NOT DEFINED $CACHE{CPM_PACKAGE_Catch2_VERSION}) OR 
+if ((NOT DEFINED $CACHE{CPM_PACKAGE_Catch2_VERSION}) OR
     (NOT $CACHE{CPM_PACKAGE_Catch2_VERSION} EQUAL 3.8.1))
   # Catch2 3.8.1 tag commit is 2b60af89e23d28eefc081bc930831ee9d45ea58b
   CPMAddPackage(
@@ -27,6 +27,12 @@ endif()
 
 # Include Catch2's CMake scripts
 list(APPEND CMAKE_MODULE_PATH $CACHE{Catch2_SOURCE_DIR}/extras)
+
+# Optional sanitizer support
+option(ENKI_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+
+# Optional code coverage support
+option(ENKI_ENABLE_COVERAGE "Enable code coverage reporting" OFF)
 
 add_executable(enki_tests)
 
@@ -58,18 +64,29 @@ target_sources(enki_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_forward_compat_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_edge_cases_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_error_handling_serdes.cpp
+  # Stress tests
+  ${CMAKE_CURRENT_SOURCE_DIR}/stress_tests/large_data_serdes.cpp
 )
 
 target_include_directories(enki_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_compile_options(enki_tests PRIVATE
   ${ENKI_COMMON_COMPILE_OPTIONS}
-  # -fsanitize=address
 )
 
-target_link_options(enki_tests PRIVATE
-  # -fsanitize=address
-)
+target_link_options(enki_tests PRIVATE)
+
+# Apply sanitizers if enabled
+if(ENKI_ENABLE_SANITIZERS)
+  target_compile_options(enki_tests PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+  target_link_options(enki_tests PRIVATE -fsanitize=address,undefined)
+endif()
+
+# Apply coverage if enabled
+if(ENKI_ENABLE_COVERAGE)
+  target_compile_options(enki_tests PRIVATE --coverage -O0 -g3)
+  target_link_options(enki_tests PRIVATE --coverage)
+endif()
 
 target_link_libraries(enki_tests PRIVATE
   enki
