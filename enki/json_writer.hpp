@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <variant>
 
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/policies.hpp"
@@ -53,6 +54,12 @@ namespace enki
     constexpr Success write(const std::string &s)
     {
       mStream << std::quoted(s);
+      return {};
+    }
+
+    constexpr Success write(const std::monostate &)
+    {
+      mStream << "null";
       return {};
     }
 
@@ -114,6 +121,26 @@ namespace enki
     {
       mStream << std::quoted(name) << ": ";
       return {};
+    }
+
+    /// Write a variant as {"index": value}
+    template <typename IndexFunc, typename ValueFunc>
+    constexpr Success writeVariant(IndexFunc &&writeIndex, ValueFunc &&writeValue)
+    {
+      mStream << "{\"";
+      Success indexResult = writeIndex(*this);
+      if (!indexResult)
+      {
+        return indexResult;
+      }
+      mStream << "\": ";
+      Success valueResult = writeValue(*this);
+      if (!valueResult)
+      {
+        return valueResult;
+      }
+      mStream << "}";
+      return {indexResult.size() + valueResult.size()};
     }
 
     const std::stringstream &data() const

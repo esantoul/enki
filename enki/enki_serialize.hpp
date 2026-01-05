@@ -24,14 +24,11 @@ namespace enki
     template <typename T, typename Writer, size_t... idx>
     constexpr Success serializeCustom(const T &value, Writer &&w, std::index_sequence<idx...>);
 
-    template <typename... Functors>
-    struct Overloaded : Functors...
-    {
-      using Functors::operator()...;
-    };
+    template <typename SizeType, typename Writer>
+    constexpr Success serializeVariantIndex(size_t index, Writer &&w);
 
-    template <typename... Functors>
-    Overloaded(Functors...) -> Overloaded<Functors...>;
+    template <typename T, typename Writer>
+    constexpr Success serializeVariantValue(const T &value, Writer &&w);
   } // namespace detail
 
   template <typename T, typename Writer>
@@ -129,7 +126,6 @@ namespace enki
     }
     else if constexpr (concepts::variant_like<T>)
     {
-      using Policy = typename std::remove_cvref_t<Writer>::policy_type;
       using SizeType = typename std::remove_cvref_t<Writer>::size_type;
 
       if (value.index() > std::numeric_limits<SizeType>::max())
@@ -142,39 +138,11 @@ namespace enki
         return "Variant cannot be serialized because it is in invalid state";
       }
 
-      Success isGood = serialize(static_cast<SizeType>(value.index()), w);
-      if (!isGood)
-      {
-        return isGood;
-      }
-
-      // For forward_compat policy, use writeSkippable to handle size prefix
-      // This enables skipping unknown variant alternatives during deserialization
-      if constexpr (std::is_same_v<Policy, forward_compatible_t>)
-      {
-        std::visit(
-          detail::Overloaded{
-            [&isGood, &w](const std::monostate &) {
-              // Write size 0 for monostate (no data to follow)
-              isGood.update(w.writeSkippable([](auto &&) { return Success{}; }));
-            },
-            [&isGood, &w](const auto &v) {
-              isGood.update(w.writeSkippable([&v](auto &&writer) {
-                return serialize(v, std::forward<decltype(writer)>(writer));
-              }));
-            }},
-          value);
-      }
-      else
-      {
-        std::visit(
-          detail::Overloaded{
-            [](const std::monostate &) {},
-            [&isGood, &w](const auto &v) { isGood.update(serialize(v, w)); }},
-          value);
-      }
-
-      return isGood;
+      return w.writeVariant(
+        [&](auto &writer) {
+          return detail::serializeVariantIndex<SizeType>(value.index(), writer);
+        },
+        [&](auto &writer) { return detail::serializeVariantValue(value, writer); });
     }
     else if constexpr (concepts::custom_static_serializable<T>)
     {
@@ -274,6 +242,18 @@ namespace enki
       }
 
       return ret;
+    }
+
+    template <typename SizeType, typename Writer>
+    constexpr Success serializeVariantIndex(size_t index, Writer &&w)
+    {
+      return serialize(static_cast<SizeType>(index), w);
+    }
+
+    template <typename T, typename Writer>
+    constexpr Success serializeVariantValue(const T &value, Writer &&w)
+    {
+      return std::visit([&w](const auto &v) { return serialize(v, w); }, value);
     }
   } // namespace detail
 } // namespace enki

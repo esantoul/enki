@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string_view>
+#include <variant>
 
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/policies.hpp"
@@ -24,6 +25,11 @@ namespace enki
     constexpr Success write(const T &)
     {
       return {sizeof(T)};
+    }
+
+    constexpr Success write(const std::monostate &)
+    {
+      return {};  // No bytes for monostate
     }
 
     constexpr Success arrayBegin() const
@@ -87,6 +93,30 @@ namespace enki
       }
       // Add size field overhead to total
       return {sizeof(size_type) + probeResult.size()};
+    }
+
+    /// Probe a variant: index + value (with size prefix if forward_compatible)
+    template <typename IndexFunc, typename ValueFunc>
+    constexpr Success writeVariant(IndexFunc &&writeIndex, ValueFunc &&writeValue)
+    {
+      Success indexResult = writeIndex(*this);
+      if (!indexResult)
+      {
+        return indexResult;
+      }
+
+      if constexpr (std::is_same_v<Policy, forward_compatible_t>)
+      {
+        // Forward compatible: add size prefix overhead
+        Success valueResult = writeSkippable([&](auto &w) { return writeValue(w); });
+        return {indexResult.size() + valueResult.size()};
+      }
+      else
+      {
+        // Strict: just probe value
+        Success valueResult = writeValue(*this);
+        return {indexResult.size() + valueResult.size()};
+      }
     }
   };
 } // namespace enki

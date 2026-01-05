@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <iterator>
 #include <span>
+#include <variant>
 #include <vector>
 
 #if __cpp_exceptions >= 199711
@@ -35,6 +36,11 @@ namespace enki
       const auto bytes = std::bit_cast<std::array<std::byte, sizeof(T)>>(v);
       std::copy(std::begin(bytes), std::end(bytes), std::back_inserter(mData));
       return {sizeof(T)};
+    }
+
+    constexpr Success write(const std::monostate &)
+    {
+      return {};  // No bytes written for monostate in binary format
     }
 
     constexpr Success arrayBegin() const
@@ -130,6 +136,30 @@ namespace enki
       return result.update(writeContent(*this));
     }
 
+    /// Write a variant: index + value (with size prefix if forward_compatible)
+    template <typename IndexFunc, typename ValueFunc>
+    constexpr Success writeVariant(IndexFunc &&writeIndex, ValueFunc &&writeValue)
+    {
+      Success indexResult = writeIndex(*this);
+      if (!indexResult)
+      {
+        return indexResult;
+      }
+
+      if constexpr (std::is_same_v<Policy, forward_compatible_t>)
+      {
+        // Forward compatible: wrap value with size prefix
+        Success valueResult = writeSkippable([&](auto &w) { return writeValue(w); });
+        return {indexResult.size() + valueResult.size()};
+      }
+      else
+      {
+        // Strict: write value directly
+        Success valueResult = writeValue(*this);
+        return {indexResult.size() + valueResult.size()};
+      }
+    }
+
   private:
     std::vector<std::byte> mData;
   };
@@ -165,6 +195,11 @@ namespace enki
       mCurrentSize += sizeof(T);
 
       return {sizeof(T)};
+    }
+
+    constexpr Success write(const std::monostate &)
+    {
+      return {};  // No bytes written for monostate in binary format
     }
 
     constexpr Success arrayBegin() const
@@ -243,6 +278,30 @@ namespace enki
 
       // Write actual data
       return result.update(writeContent(*this));
+    }
+
+    /// Write a variant: index + value (with size prefix if forward_compatible)
+    template <typename IndexFunc, typename ValueFunc>
+    constexpr Success writeVariant(IndexFunc &&writeIndex, ValueFunc &&writeValue)
+    {
+      Success indexResult = writeIndex(*this);
+      if (!indexResult)
+      {
+        return indexResult;
+      }
+
+      if constexpr (std::is_same_v<Policy, forward_compatible_t>)
+      {
+        // Forward compatible: wrap value with size prefix
+        Success valueResult = writeSkippable([&](auto &w) { return writeValue(w); });
+        return {indexResult.size() + valueResult.size()};
+      }
+      else
+      {
+        // Strict: write value directly
+        Success valueResult = writeValue(*this);
+        return {indexResult.size() + valueResult.size()};
+      }
     }
 
   private:

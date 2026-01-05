@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <span>
+#include <variant>
 #include <vector>
 
 #if __cpp_exceptions >= 199711
@@ -46,6 +47,11 @@ namespace enki
       std::memcpy(&v, mSpan.data() + mCurrentIndex, sizeof(T));
       mCurrentIndex += sizeof(T);
       return {sizeof(T)};
+    }
+
+    constexpr Success read(std::monostate &)
+    {
+      return {};  // No bytes to read for monostate
     }
 
     /// Skip the size hint only - reads and discards the size prefix
@@ -142,6 +148,18 @@ namespace enki
       return mSpan.size() - mCurrentIndex;
     }
 
+    /// Read variant index from binary format
+    constexpr Success readVariantIndex(SizeType &index)
+    {
+      return read(index);
+    }
+
+    /// Finish reading a variant - no-op for binary format
+    constexpr Success finishVariant()
+    {
+      return {};
+    }
+
   private:
     std::span<const std::byte> mSpan;
     size_t mCurrentIndex{};
@@ -164,6 +182,8 @@ namespace enki
     using BinSpanReader<Policy, SizeType>::read;
     using BinSpanReader<Policy, SizeType>::skipHint;
     using BinSpanReader<Policy, SizeType>::skipHintAndValue;
+    using BinSpanReader<Policy, SizeType>::readVariantIndex;
+    using BinSpanReader<Policy, SizeType>::finishVariant;
 
   private:
     std::vector<std::byte> mData;

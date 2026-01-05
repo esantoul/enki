@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <variant>
 
 #include "enki/impl/concepts.hpp"
 #include "enki/impl/policies.hpp"
@@ -178,6 +179,16 @@ namespace enki
     constexpr Success read(std::string &str)
     {
       mStream >> std::quoted(str);
+      return {};
+    }
+
+    constexpr Success read(std::monostate &)
+    {
+      std::string word = readWord(mStream);
+      if (word != "null")
+      {
+        return "Expected null for monostate";
+      }
       return {};
     }
 
@@ -376,6 +387,54 @@ namespace enki
 
       mStream >> junk;
 
+      return {};
+    }
+
+    /// Read variant index from {"index": value} format
+    /// Reads the opening brace, key (index), and colon
+    Success readVariantIndex(size_type &index)
+    {
+      char brace{};
+      mStream >> brace;
+      if (brace != '{')
+      {
+        return "Expected '{' at start of variant";
+      }
+
+      // Read the key (index as string) - we need to parse it as a number
+      std::string indexStr;
+      mStream >> std::quoted(indexStr);
+
+      // Parse index from string
+      try
+      {
+        index = static_cast<size_type>(std::stoul(indexStr));
+      }
+      catch (...)
+      {
+        return "Invalid variant index in JSON";
+      }
+
+      // Read the colon
+      char colon{};
+      mStream >> colon;
+      if (colon != ':')
+      {
+        return "Expected ':' after variant index";
+      }
+
+      return {};
+    }
+
+    /// Finish reading a variant - reads the closing brace
+    Success finishVariant()
+    {
+      char brace{};
+      mStream >> brace;
+      if (brace != '}')
+      {
+        return "Expected '}' at end of variant";
+      }
       return {};
     }
 

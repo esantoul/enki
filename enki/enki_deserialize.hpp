@@ -156,7 +156,7 @@ namespace enki
 
       SizeType index = static_cast<SizeType>(-1);
 
-      Success isGood = deserialize(index, r);
+      Success isGood = r.readVariantIndex(index);
       if (!isGood)
       {
         return isGood;
@@ -169,6 +169,12 @@ namespace enki
         {
           // Skip the size hint and the unknown data
           isGood.update(r.skipHintAndValue());
+          if (!isGood)
+          {
+            return isGood;
+          }
+
+          isGood.update(r.finishVariant());
           if (!isGood)
           {
             return isGood;
@@ -204,6 +210,11 @@ namespace enki
 
       isGood.update(detail::deserializeVariantLike(
         value, r, index, std::make_index_sequence<std::variant_size_v<T>>()));
+
+      if (isGood)
+      {
+        isGood.update(r.finishVariant());
+      }
 
       return isGood;
     }
@@ -328,21 +339,6 @@ namespace enki
         {
           value = std::move(toDeserialize);
         }
-        return true;
-      }
-    };
-
-    template <>
-    struct AlternativeDeserializer<std::monostate>
-    {
-      template <typename T, typename Reader>
-      constexpr bool operator()(T &value, Reader &&, bool isCorrectType, Success &)
-      {
-        if (!isCorrectType)
-        {
-          return false;
-        }
-        value = std::monostate{};
         return true;
       }
     };

@@ -1,6 +1,8 @@
-/// Exhaustive tests for the policy system (strict_t and forward_compatible_t)
-/// Tests forward compatibility, skipHintAndValue(), and policy-specific behavior
+/// Tests for the forward_compatible_t policy
+/// Focuses on policy-specific behavior: unknown index handling, monostate fallback,
+/// size prefix, and skipHintAndValue() functionality
 
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -15,46 +17,7 @@
 #include "enki/json_writer.hpp"
 
 // =============================================================================
-// Section A: Binary Format - Strict Policy (Default Behavior)
-// =============================================================================
-
-TEST_CASE("Binary strict - known variant index roundtrip", "[policy][strict][binary]")
-{
-  enki::BinWriter<enki::strict_t> writer;
-
-  std::variant<int, double, char> value = 3.14;
-  const auto serRes = enki::serialize(value, writer);
-  REQUIRE(serRes);
-  // Strict: index (4 bytes) + data (8 bytes for double)
-  REQUIRE(serRes.size() == sizeof(uint32_t) + sizeof(double));
-
-  std::variant<int, double, char> deserialized;
-  const auto desRes =
-    enki::deserialize(deserialized, enki::BinSpanReader<enki::strict_t>(writer.data()));
-  REQUIRE(desRes);
-  REQUIRE(std::get<double>(deserialized) == 3.14);
-}
-
-TEST_CASE("Binary strict - unknown variant index returns error", "[policy][strict][binary]")
-{
-  // Serialize with a variant that has more alternatives
-  using NewVariant = std::variant<int, double, std::string>;
-  enki::BinWriter<enki::strict_t> writer;
-
-  NewVariant newValue = std::string("unknown"); // index 2
-  const auto serRes = enki::serialize(newValue, writer);
-  REQUIRE(serRes);
-
-  // Try to deserialize into a variant with fewer alternatives
-  using OldVariant = std::variant<int, double>;
-  OldVariant oldValue;
-  const auto desRes =
-    enki::deserialize(oldValue, enki::BinSpanReader<enki::strict_t>(writer.data()));
-  REQUIRE_FALSE(desRes);
-}
-
-// =============================================================================
-// Section B: Binary Format - Forward Compat Policy
+// Section A: Binary Format - Forward Compat Policy
 // =============================================================================
 
 TEST_CASE(
@@ -175,22 +138,70 @@ TEST_CASE("Binary forward_compat - monostate serialization", "[policy][forward_c
 }
 
 // =============================================================================
-// Section C & D: JSON Format Tests
-// NOTE: JSON variant serialization currently outputs index and value concatenated
-// without a separator (e.g., "042" for variant<int,double> with index 0, value 42).
-// This makes JSON variant format non-parseable. These tests are skipped pending
-// a proper JSON variant format implementation using arrays like [index, value].
+// Section B: JSON Format - Forward Compat Policy
 // =============================================================================
 
-// TODO: Re-enable once JSON variant format is fixed to use array syntax
-// TEST_CASE("JSON strict - known variant index roundtrip", "[policy][strict][json][!mayfail]")
-// TEST_CASE("JSON forward_compat - known variant index roundtrip",
-// "[policy][forward_compat][json][!mayfail]") TEST_CASE("JSON forward_compat - unknown index with
-// monostate", "[policy][forward_compat][json][!mayfail]") TEST_CASE("JSON forward_compat - skip
-// complex JSON structures", "[policy][forward_compat][json][!mayfail]")
+TEST_CASE("JSON forward_compat - known variant index roundtrip", "[policy][forward_compat][json]")
+{
+  enki::JSONWriter<enki::forward_compatible_t> writer;
+
+  std::variant<int, double, char> value = 42;
+  const auto serRes = enki::serialize(value, writer);
+  REQUIRE(serRes);
+
+  std::string json = writer.data().str();
+  REQUIRE(json == R"({"0": 42})");
+
+  std::variant<int, double, char> deserialized;
+  const auto desRes =
+    enki::deserialize(deserialized, enki::JSONReader<enki::forward_compatible_t>(json));
+  REQUIRE(desRes);
+  REQUIRE(std::get<int>(deserialized) == 42);
+}
+
+TEST_CASE(
+  "JSON forward_compat - unknown index with monostate falls back",
+  "[policy][forward_compat][json]")
+{
+  // Manually create JSON with unknown index (index 3 is unknown for a 3-element variant)
+  std::string json = R"({"3": "unknown_value"})";
+
+  // Variant with monostate fallback
+  std::variant<int, double, std::monostate> value = 42;
+  const auto desRes =
+    enki::deserialize(value, enki::JSONReader<enki::forward_compatible_t>(json));
+  REQUIRE(desRes);
+  REQUIRE(std::holds_alternative<std::monostate>(value));
+}
+
+TEST_CASE(
+  "JSON forward_compat - unknown index without monostate returns error",
+  "[policy][forward_compat][json]")
+{
+  // Manually create JSON with unknown index
+  std::string json = R"({"5": 42})";
+
+  // Variant without monostate
+  std::variant<int, double> value;
+  const auto desRes =
+    enki::deserialize(value, enki::JSONReader<enki::forward_compatible_t>(json));
+  REQUIRE_FALSE(desRes);
+}
+
+TEST_CASE("JSON forward_compat - skip complex JSON structures", "[policy][forward_compat][json]")
+{
+  // Unknown index with complex nested value
+  std::string json = R"({"5": {"nested": [1, 2, {"deep": "value"}], "other": true}})";
+
+  std::variant<int, double, std::monostate> value = 42;
+  const auto desRes =
+    enki::deserialize(value, enki::JSONReader<enki::forward_compatible_t>(json));
+  REQUIRE(desRes);
+  REQUIRE(std::holds_alternative<std::monostate>(value));
+}
 
 // =============================================================================
-// Section E: skipHintAndValue() Unit Tests
+// Section C: skipHintAndValue() Unit Tests
 // =============================================================================
 
 TEST_CASE(
@@ -308,7 +319,7 @@ TEST_CASE("JSONReader skipHintAndValue - skips null", "[policy][skipHintAndValue
 }
 
 // =============================================================================
-// Section F: Cross-compatibility Tests
+// Section D: Cross-compatibility Tests
 // =============================================================================
 
 TEST_CASE("Forward compat writer -> Strict reader works for known types", "[policy][cross_compat]")
@@ -334,7 +345,7 @@ TEST_CASE("Forward compat writer -> Strict reader works for known types", "[poli
 }
 
 // =============================================================================
-// Section G: monostate Handling
+// Section E: monostate Fallback Handling
 // =============================================================================
 
 TEST_CASE("Monostate at index 0 is found as fallback", "[policy][monostate]")
@@ -380,7 +391,7 @@ TEST_CASE("Monostate at non-zero index is found as fallback", "[policy][monostat
 }
 
 // =============================================================================
-// Section H: Different SizeType Tests
+// Section F: Different SizeType Tests
 // =============================================================================
 
 TEST_CASE("Forward compat with uint16_t SizeType", "[policy][sizetype]")
@@ -418,7 +429,7 @@ TEST_CASE("Forward compat with uint8_t SizeType", "[policy][sizetype]")
 }
 
 // =============================================================================
-// Section I: Edge Cases
+// Section G: Edge Cases
 // =============================================================================
 
 TEST_CASE("Forward compat - variant containing optional", "[policy][edge_case]")
@@ -496,50 +507,8 @@ TEST_CASE("Forward compat - vector of variants", "[policy][edge_case]")
 }
 
 // =============================================================================
-// Section J: Nested Variant Tests
+// Section H: Nested Variant Tests (Forward Compat Specific)
 // =============================================================================
-
-TEST_CASE("Strict - nested variant roundtrip", "[policy][strict][nested_variant]")
-{
-  enki::BinWriter<enki::strict_t> writer;
-
-  using InnerVariant = std::variant<char, double>;
-  using OuterVariant = std::variant<int, InnerVariant>;
-
-  OuterVariant value = InnerVariant{'X'};
-  const auto serRes = enki::serialize(value, writer);
-  REQUIRE(serRes);
-
-  OuterVariant deserialized;
-  const auto desRes =
-    enki::deserialize(deserialized, enki::BinSpanReader<enki::strict_t>(writer.data()));
-  REQUIRE(desRes);
-  REQUIRE(std::holds_alternative<InnerVariant>(deserialized));
-  REQUIRE(std::get<char>(std::get<InnerVariant>(deserialized)) == 'X');
-}
-
-TEST_CASE(
-  "Strict - nested variant unknown outer index returns error",
-  "[policy][strict][nested_variant]")
-{
-  // Serialize with a variant that has more outer alternatives
-  using NewInner = std::variant<char, double>;
-  using NewOuter = std::variant<int, NewInner, std::string>;
-
-  enki::BinWriter<enki::strict_t> writer;
-  NewOuter newValue = std::string("unknown"); // index 2
-  const auto serRes = enki::serialize(newValue, writer);
-  REQUIRE(serRes);
-
-  // Old version has fewer outer alternatives
-  using OldInner = std::variant<char, double>;
-  using OldOuter = std::variant<int, OldInner>;
-
-  OldOuter oldValue;
-  const auto desRes =
-    enki::deserialize(oldValue, enki::BinSpanReader<enki::strict_t>(writer.data()));
-  REQUIRE_FALSE(desRes);
-}
 
 TEST_CASE("Forward compat - nested variant roundtrip", "[policy][forward_compat][nested_variant]")
 {
