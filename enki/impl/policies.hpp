@@ -11,11 +11,11 @@ namespace enki
   inline constexpr strict_t strict{};
 
   /// Forward compatibility policy - skip unknown variants, set to monostate
-  struct forward_compat_t
+  struct forward_compatible_t
   {
   };
 
-  inline constexpr forward_compat_t forward_compat{};
+  inline constexpr forward_compatible_t forward_compatible{};
 
 } // namespace enki
 

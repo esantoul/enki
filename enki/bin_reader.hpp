@@ -22,10 +22,9 @@ namespace enki
   class BinSpanReader
   {
   public:
-    using policy_type = Policy;                                                    // NOLINT
-    using size_type = SizeType;                                                    // NOLINT
-    static constexpr bool serialize_custom_names = false;                          // NOLINT
-    static constexpr bool requires_size_prefix_for_forward_compatibility = true;   // NOLINT
+    using policy_type = Policy;                           // NOLINT
+    using size_type = SizeType;                           // NOLINT
+    static constexpr bool serialize_custom_names = false; // NOLINT
 
     BinSpanReader(std::span<const std::byte> data) :
       mSpan(data)
@@ -49,9 +48,17 @@ namespace enki
       return {sizeof(T)};
     }
 
-    /// Skip a value - reads embedded size then skips that many bytes
+    /// Skip the size hint only - reads and discards the size prefix
+    /// Used for forward compatibility when deserializing a known variant index
+    constexpr Success skipHint()
+    {
+      SizeType size{};
+      return read(size);
+    }
+
+    /// Skip the size hint and value - reads size then skips that many bytes
     /// Used for forward compatibility when encountering unknown variant types
-    constexpr Success skipValue()
+    constexpr Success skipHintAndValue()
     {
       SizeType size{};
       Success result = read(size);
@@ -63,7 +70,7 @@ namespace enki
       if (mCurrentIndex + size > mSpan.size())
       {
 #if __cpp_exceptions >= 199711
-        throw std::out_of_range("BinReader skipValue out of range");
+        throw std::out_of_range("BinReader skipHintAndValue out of range");
 #else
         std::abort();
 #endif
@@ -155,7 +162,8 @@ namespace enki
     }
 
     using BinSpanReader<Policy, SizeType>::read;
-    using BinSpanReader<Policy, SizeType>::skipValue;
+    using BinSpanReader<Policy, SizeType>::skipHint;
+    using BinSpanReader<Policy, SizeType>::skipHintAndValue;
 
   private:
     std::vector<std::byte> mData;

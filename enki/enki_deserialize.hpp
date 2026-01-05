@@ -165,10 +165,10 @@ namespace enki
       if (index >= std::variant_size_v<T>)
       {
         // Unknown variant index
-        if constexpr (std::is_same_v<Policy, forward_compat_t>)
+        if constexpr (std::is_same_v<Policy, forward_compatible_t>)
         {
-          // Skip the unknown data
-          isGood.update(r.skipValue());
+          // Skip the size hint and the unknown data
+          isGood.update(r.skipHintAndValue());
           if (!isGood)
           {
             return isGood;
@@ -192,19 +192,14 @@ namespace enki
         }
       }
 
-      // Known index - for forward_compat, skip the size field first
-      if constexpr (
-        std::is_same_v<Policy, forward_compat_t> &&
-        std::remove_cvref_t<Reader>::requires_size_prefix_for_forward_compatibility)
+      // Known index - for forward_compatible, skip the size hint first
+      if constexpr (std::is_same_v<Policy, forward_compatible_t>)
       {
-        SizeType dataSize{};
-        isGood.update(deserialize(dataSize, r));
+        isGood.update(r.skipHint());
         if (!isGood)
         {
           return isGood;
         }
-        // dataSize is not used here, just consumed from stream
-        static_cast<void>(dataSize);
       }
 
       isGood.update(detail::deserializeVariantLike(

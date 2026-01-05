@@ -129,10 +129,9 @@ namespace enki
   class JSONReader
   {
   public:
-    using policy_type = Policy;                                                     // NOLINT
-    using size_type = uint32_t;                                                     // NOLINT
-    static constexpr bool serialize_custom_names = true;                            // NOLINT
-    static constexpr bool requires_size_prefix_for_forward_compatibility = false;   // NOLINT
+    using policy_type = Policy;                          // NOLINT
+    using size_type = uint32_t;                          // NOLINT
+    static constexpr bool serialize_custom_names = true; // NOLINT
 
     JSONReader(std::string_view sv)
     {
@@ -182,9 +181,16 @@ namespace enki
       return {};
     }
 
+    /// Skip the size hint only - JSON has no size hints, so this is a no-op
+    /// Used for forward compatibility when deserializing a known variant index
+    Success skipHint()
+    {
+      return {};
+    }
+
     /// Skip a JSON value - parses and discards current value
     /// Used for forward compatibility when encountering unknown variant types
-    Success skipValue()
+    Success skipHintAndValue()
     {
       // Skip whitespace
       mStream >> std::ws;

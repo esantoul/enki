@@ -150,7 +150,7 @@ namespace enki
 
       // For forward_compat policy, use writeSkippable to handle size prefix
       // This enables skipping unknown variant alternatives during deserialization
-      if constexpr (std::is_same_v<Policy, forward_compat_t>)
+      if constexpr (std::is_same_v<Policy, forward_compatible_t>)
       {
         std::visit(
           detail::Overloaded{
