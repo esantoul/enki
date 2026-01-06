@@ -13,7 +13,7 @@ namespace enki
 {
   /// Probe writer that counts bytes without writing data
   /// Used for calculating serialized size before actual serialization
-  template <typename Policy = strict_t, typename SizeType = uint32_t>
+  template <policy Policy = strict_t, typename SizeType = uint32_t>
   class BinProbe
   {
   public:
@@ -22,7 +22,10 @@ namespace enki
     static constexpr bool serialize_custom_names = false; // NOLINT
 
     BinProbe() = default;
-    explicit constexpr BinProbe(Policy) {}
+
+    explicit constexpr BinProbe(Policy)
+    {
+    }
 
     template <concepts::arithmetic_or_enum T>
     constexpr Success write(const T &)
@@ -32,7 +35,7 @@ namespace enki
 
     constexpr Success write(const std::monostate &)
     {
-      return {};  // No bytes for monostate
+      return {}; // No bytes for monostate
     }
 
     constexpr Success arrayBegin() const
@@ -120,6 +123,23 @@ namespace enki
         Success valueResult = writeValue(*this);
         return {indexResult.size() + valueResult.size()};
       }
+    }
+
+    /// Probe an optional: bool flag + value if present
+    template <typename ValueFunc>
+    constexpr Success writeOptional(bool hasValue, ValueFunc &&writeValue)
+    {
+      Success flagResult = write(hasValue);
+      if (!flagResult)
+      {
+        return flagResult;
+      }
+      if (hasValue)
+      {
+        Success valueResult = writeValue(*this);
+        return {flagResult.size() + valueResult.size()};
+      }
+      return flagResult;
     }
   };
 

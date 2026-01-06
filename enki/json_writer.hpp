@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -16,7 +17,7 @@
 
 namespace enki
 {
-  template <typename Policy = strict_t>
+  template <policy Policy = strict_t>
   class JSONWriter
   {
   public:
@@ -25,7 +26,10 @@ namespace enki
     static constexpr bool serialize_custom_names = true; // NOLINT
 
     JSONWriter() = default;
-    explicit constexpr JSONWriter(Policy) {}
+
+    explicit constexpr JSONWriter(Policy)
+    {
+    }
 
     constexpr Success write(const bool v)
     {
@@ -36,7 +40,11 @@ namespace enki
     template <concepts::arithmetic_or_enum T>
     constexpr Success write(const T &v)
     {
-      if constexpr (sizeof(T) < sizeof(int32_t))
+      if constexpr (std::is_floating_point_v<T>)
+      {
+        mStream << std::setprecision(std::numeric_limits<T>::max_digits10) << v;
+      }
+      else if constexpr (sizeof(T) < sizeof(int32_t))
       {
         mStream << static_cast<int32_t>(v);
       }
@@ -144,6 +152,18 @@ namespace enki
       }
       mStream << "}";
       return {indexResult.size() + valueResult.size()};
+    }
+
+    /// Write an optional as null (empty) or value directly (has value)
+    template <typename ValueFunc>
+    constexpr Success writeOptional(bool hasValue, ValueFunc &&writeValue)
+    {
+      if (!hasValue)
+      {
+        mStream << "null";
+        return {};
+      }
+      return writeValue(*this);
     }
 
     const std::stringstream &data() const

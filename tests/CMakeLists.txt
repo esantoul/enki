@@ -14,7 +14,7 @@ else()
   include(${ENKI_SOURCE_DIR}/cmake/CPM.cmake)
 endif()
 
-if ((NOT DEFINED $CACHE{CPM_PACKAGE_Catch2_VERSION}) OR 
+if ((NOT DEFINED $CACHE{CPM_PACKAGE_Catch2_VERSION}) OR
     (NOT $CACHE{CPM_PACKAGE_Catch2_VERSION} EQUAL 3.8.1))
   # Catch2 3.8.1 tag commit is 2b60af89e23d28eefc081bc930831ee9d45ea58b
   CPMAddPackage(
@@ -28,6 +28,15 @@ endif()
 # Include Catch2's CMake scripts
 list(APPEND CMAKE_MODULE_PATH $CACHE{Catch2_SOURCE_DIR}/extras)
 
+# Optional sanitizer support
+option(ENKI_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+
+# Optional code coverage support
+option(ENKI_ENABLE_COVERAGE "Enable code coverage reporting" OFF)
+
+# Optional benchmark support
+option(ENKI_ENABLE_BENCHMARKS "Build performance benchmarks" OFF)
+
 add_executable(enki_tests)
 
 set_target_properties(enki_tests PROPERTIES
@@ -37,30 +46,50 @@ set_target_properties(enki_tests PROPERTIES
 target_sources(enki_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/bin_writer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/ctad.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/arithmetic_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/enum_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/array_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/tuple_like_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/optional_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/variant_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/range_constructible_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/map_types_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/custom_type_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/composite_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/conversion_serdes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/policy_forward_compat_serdes.cpp
+  # Binary format tests
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_arithmetic_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_enum_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_array_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_tuple_like_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_optional_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_variant_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_range_constructible_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_map_types_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_custom_type_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_composite_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_conversion_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_forward_compat_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_edge_cases_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/binary_error_handling_serdes.cpp
+  # JSON format tests
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_variant_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_forward_compat_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_edge_cases_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/json_error_handling_serdes.cpp
+  # Stress tests
+  ${CMAKE_CURRENT_SOURCE_DIR}/stress_tests/large_data_serdes.cpp
 )
 
 target_include_directories(enki_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_compile_options(enki_tests PRIVATE
   ${ENKI_COMMON_COMPILE_OPTIONS}
-  # -fsanitize=address
 )
 
-target_link_options(enki_tests PRIVATE
-  # -fsanitize=address
-)
+target_link_options(enki_tests PRIVATE)
+
+# Apply sanitizers if enabled
+if(ENKI_ENABLE_SANITIZERS)
+  target_compile_options(enki_tests PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+  target_link_options(enki_tests PRIVATE -fsanitize=address,undefined)
+endif()
+
+# Apply coverage if enabled
+if(ENKI_ENABLE_COVERAGE)
+  target_compile_options(enki_tests PRIVATE --coverage -O0 -g3)
+  target_link_options(enki_tests PRIVATE --coverage)
+endif()
 
 target_link_libraries(enki_tests PRIVATE
   enki
@@ -73,3 +102,24 @@ catch_discover_tests(enki_tests)
 
 add_custom_target(enki_tests_run ALL ctest --output-on-failure)
 add_dependencies(enki_tests_run enki_tests)
+
+# Benchmark executable (separate from tests)
+if(ENKI_ENABLE_BENCHMARKS)
+  add_executable(enki_benchmarks
+    ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/serdes_benchmarks.cpp
+  )
+
+  set_target_properties(enki_benchmarks PROPERTIES
+    ${ENKI_COMMON_PROPERTIES}
+  )
+
+  target_link_libraries(enki_benchmarks PRIVATE
+    enki
+    Catch2::Catch2WithMain
+  )
+
+  target_compile_options(enki_benchmarks PRIVATE
+    ${ENKI_COMMON_COMPILE_OPTIONS}
+    -O3  # Optimize for realistic benchmark measurements
+  )
+endif()

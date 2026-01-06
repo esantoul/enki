@@ -69,6 +69,12 @@ namespace enki
         throw std::invalid_argument("Not a valid JSON array");
       }
 
+      // Early check for empty array []
+      if (input.size() == 2 && input[1] == ']')
+      {
+        return 0;
+      }
+
       int depth = 0;
       bool inString = false;
       bool escape = false;
@@ -126,7 +132,7 @@ namespace enki
     }
   } // namespace
 
-  template <typename Policy = strict_t>
+  template <policy Policy = strict_t>
   class JSONReader
   {
   public:
@@ -440,6 +446,40 @@ namespace enki
       {
         return "Expected '}' at end of variant";
       }
+      return {};
+    }
+
+    /// Read optional start - returns true if has value, false if null
+    /// Format: null (empty) or value directly (has value)
+    Success readOptionalHasValue(bool &hasValue)
+    {
+      mStream >> std::ws;
+      int ch = mStream.peek();
+      if (ch == std::char_traits<char>::eof())
+      {
+        return "Unexpected end of JSON when reading optional";
+      }
+
+      if (static_cast<char>(ch) == 'n')
+      {
+        // Expect "null"
+        std::string word = readWord(mStream);
+        if (word != "null")
+        {
+          return "Expected 'null' for empty optional";
+        }
+        hasValue = false;
+        return {};
+      }
+
+      // Any other value means optional has content
+      hasValue = true;
+      return {};
+    }
+
+    /// Finish reading an optional - no-op for direct value format
+    Success finishOptional()
+    {
       return {};
     }
 

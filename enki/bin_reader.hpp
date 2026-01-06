@@ -19,7 +19,7 @@
 
 namespace enki
 {
-  template <typename Policy = strict_t, typename SizeType = uint32_t>
+  template <policy Policy = strict_t, typename SizeType = uint32_t>
   class BinSpanReader
   {
   public:
@@ -56,7 +56,7 @@ namespace enki
 
     constexpr Success read(std::monostate &)
     {
-      return {};  // No bytes to read for monostate
+      return {}; // No bytes to read for monostate
     }
 
     /// Skip the size hint only - reads and discards the size prefix
@@ -165,12 +165,24 @@ namespace enki
       return {};
     }
 
+    /// Read optional has-value flag from binary format
+    constexpr Success readOptionalHasValue(bool &hasValue)
+    {
+      return read(hasValue);
+    }
+
+    /// Finish reading an optional - no-op for binary format
+    constexpr Success finishOptional()
+    {
+      return {};
+    }
+
   private:
     std::span<const std::byte> mSpan;
     size_t mCurrentIndex{};
   };
 
-  template <typename Policy = strict_t, typename SizeType = uint32_t>
+  template <policy Policy = strict_t, typename SizeType = uint32_t>
   class BinReader : public BinSpanReader<Policy, SizeType>
   {
   public:
@@ -196,6 +208,8 @@ namespace enki
     using BinSpanReader<Policy, SizeType>::skipHintAndValue;
     using BinSpanReader<Policy, SizeType>::readVariantIndex;
     using BinSpanReader<Policy, SizeType>::finishVariant;
+    using BinSpanReader<Policy, SizeType>::readOptionalHasValue;
+    using BinSpanReader<Policy, SizeType>::finishOptional;
 
   private:
     std::vector<std::byte> mData;
@@ -210,7 +224,8 @@ namespace enki
   // Deduction guides for BinReader
   BinReader(std::span<const std::byte>) -> BinReader<strict_t, uint32_t>;
   BinReader(strict_t, std::span<const std::byte>) -> BinReader<strict_t, uint32_t>;
-  BinReader(forward_compatible_t, std::span<const std::byte>) -> BinReader<forward_compatible_t, uint32_t>;
+  BinReader(forward_compatible_t, std::span<const std::byte>)
+    -> BinReader<forward_compatible_t, uint32_t>;
 } // namespace enki
 
 #endif // ENKI_BIN_READER_HPP
