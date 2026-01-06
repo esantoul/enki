@@ -123,8 +123,8 @@ TEST_CASE("Nested vectors JSON roundtrip", "[edge_cases][nested][json]")
 TEST_CASE("Map with vector values JSON roundtrip", "[edge_cases][nested][json]")
 {
   const std::map<std::string, std::vector<int32_t>> original = {
-    {"empty", {}},
-    {"single", {42}},
+    {   "empty",        {}},
+    {  "single",      {42}},
     {"multiple", {1, 2, 3}}
   };
   std::map<std::string, std::vector<int32_t>> restored;
@@ -145,9 +145,8 @@ TEST_CASE("Deeply nested structure (5 levels) JSON roundtrip", "[edge_cases][nes
   using Level1 = std::vector<Level2>;
 
   const Level1 original = {
-    {{{{{1, 2}}, {{3}}}}},
-    {{{{{42}}}}}
-  };
+    {{{{{static_cast<int32_t>(1), static_cast<int32_t>(2)}}, {static_cast<int32_t>(3)}}}},
+    {{{static_cast<int32_t>(42)}}}};
   Level1 restored;
 
   enki::JSONWriter writer;
@@ -159,13 +158,7 @@ TEST_CASE("Deeply nested structure (5 levels) JSON roundtrip", "[edge_cases][nes
 
 TEST_CASE("Vector of optionals JSON roundtrip", "[edge_cases][nested][json]")
 {
-  const std::vector<std::optional<int32_t>> original = {
-    std::nullopt,
-    42,
-    std::nullopt,
-    -1,
-    0
-  };
+  const std::vector<std::optional<int32_t>> original = {std::nullopt, 42, std::nullopt, -1, 0};
   std::vector<std::optional<int32_t>> restored;
 
   enki::JSONWriter writer;
@@ -182,10 +175,17 @@ TEST_CASE("Vector of optionals JSON roundtrip", "[edge_cases][nested][json]")
 TEST_CASE("Variant with many alternatives JSON roundtrip", "[edge_cases][variant][json]")
 {
   using BigVariant = std::variant<
-    int8_t, int16_t, int32_t, int64_t,
-    uint8_t, uint16_t, uint32_t, uint64_t,
-    float, double, std::string
-  >;
+    int8_t,
+    int16_t,
+    int32_t,
+    int64_t,
+    uint8_t,
+    uint16_t,
+    uint32_t,
+    uint64_t,
+    float,
+    double,
+    std::string>;
 
   SECTION("First alternative")
   {

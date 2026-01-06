@@ -69,7 +69,7 @@ TEST_CASE("Binary - Large vector of strings (10k elements)", "[stress][binary][l
 
 TEST_CASE("Binary - Large nested vector (1000x100 elements)", "[stress][binary][large]")
 {
-  constexpr size_t kOuterCount = 1000;
+  constexpr size_t kOuterCount = 1'000;
   constexpr size_t kInnerCount = 100;
 
   std::vector<std::vector<int32_t>> original;
@@ -147,13 +147,13 @@ TEST_CASE("JSON - Large vector of strings (1k elements)", "[stress][json][large]
 // ============================================================================
 
 // Helper to create deeply nested vector
-template<size_t Depth>
+template <size_t Depth>
 struct NestedVector
 {
   using type = std::vector<typename NestedVector<Depth - 1>::type>;
 };
 
-template<>
+template <>
 struct NestedVector<0>
 {
   using type = int32_t;
@@ -175,7 +175,7 @@ TEST_CASE("Binary - Moderately nested vector (10 levels)", "[stress][binary][nes
   using Level10 = std::vector<Level9>;
 
   // Create a structure with one element at each level
-  Level10 original = {{{{{{{{{{{42}}}}}}}}}}};
+  Level10 original = {{{{{{{{{{static_cast<int32_t>(42)}}}}}}}}}};
 
   enki::BinWriter writer;
   REQUIRE(enki::serialize(original, writer));
@@ -200,7 +200,7 @@ TEST_CASE("JSON - Moderately nested vector (10 levels)", "[stress][json][nested]
   using Level9 = std::vector<Level8>;
   using Level10 = std::vector<Level9>;
 
-  Level10 original = {{{{{{{{{{{42}}}}}}}}}}};
+  Level10 original = {{{{{{{{{{42}}}}}}}}}};
 
   enki::JSONWriter writer;
   REQUIRE(enki::serialize(original, writer));
@@ -222,8 +222,9 @@ TEST_CASE("Binary - Deeply nested with multiple elements per level", "[stress][b
 
   // 5 levels with 2 elements each = 32 leaf values
   Level5 original = {
-    {{{{1, 2}, {3, 4}}, {{5, 6}, {7, 8}}}, {{{9, 10}, {11, 12}}, {{13, 14}, {15, 16}}}},
-    {{{{17, 18}, {19, 20}}, {{21, 22}, {23, 24}}}, {{{25, 26}, {27, 28}}, {{29, 30}, {31, 32}}}}};
+    {        {{{1, 2}, {3, 4}}, {{5, 6}, {7, 8}}},  {{{9, 10}, {11, 12}}, {{13, 14}, {15, 16}}}},
+    {{{{17, 18}, {19, 20}}, {{21, 22}, {23, 24}}}, {{{25, 26}, {27, 28}}, {{29, 30}, {31, 32}}}}
+  };
 
   enki::BinWriter writer;
   REQUIRE(enki::serialize(original, writer));
@@ -240,11 +241,11 @@ TEST_CASE("Binary - Deeply nested with multiple elements per level", "[stress][b
 
 TEST_CASE("Binary - Large string (1MB)", "[stress][binary][string]")
 {
-  constexpr size_t kStringSize = 1024 * 1024; // 1 MB
+  constexpr size_t kStringSize = 1'024 * 1'024; // 1 MB
 
   std::string original(kStringSize, 'x');
   // Add some variation
-  for (size_t i = 0; i < kStringSize; i += 1000)
+  for (size_t i = 0; i < kStringSize; i += 1'000)
   {
     original[i] = static_cast<char>('a' + (i % 26));
   }
@@ -261,7 +262,7 @@ TEST_CASE("Binary - Large string (1MB)", "[stress][binary][string]")
 
 TEST_CASE("Binary - Very large string (10MB)", "[stress][binary][string][slow]")
 {
-  constexpr size_t kStringSize = 10 * 1024 * 1024; // 10 MB
+  constexpr size_t kStringSize = 10 * 1'024 * 1'024; // 10 MB
 
   std::string original(kStringSize, 'y');
 
@@ -278,7 +279,7 @@ TEST_CASE("Binary - Very large string (10MB)", "[stress][binary][string][slow]")
 TEST_CASE("JSON - Large string (100KB)", "[stress][json][string]")
 {
   // JSON strings need escaping, so use smaller size
-  constexpr size_t kStringSize = 100 * 1024; // 100 KB
+  constexpr size_t kStringSize = 100 * 1'024; // 100 KB
 
   std::string original(kStringSize, 'z');
   // Add some variation (using only safe ASCII)
@@ -300,7 +301,7 @@ TEST_CASE("JSON - Large string (100KB)", "[stress][json][string]")
 TEST_CASE("Binary - Vector of large strings", "[stress][binary][string]")
 {
   constexpr size_t kStringCount = 100;
-  constexpr size_t kStringSize = 10 * 1024; // 10 KB each
+  constexpr size_t kStringSize = 10 * 1'024; // 10 KB each
 
   std::vector<std::string> original;
   original.reserve(kStringCount);
@@ -351,7 +352,7 @@ TEST_CASE("Binary - Verify writer reserve prevents reallocations", "[stress][bin
 TEST_CASE("Binary - Large data roundtrip preserves all bytes", "[stress][binary][integrity]")
 {
   // Create a vector with every possible byte value repeated
-  constexpr size_t kRepetitions = 1000;
+  constexpr size_t kRepetitions = 1'000;
   std::vector<uint8_t> original;
   original.reserve(256 * kRepetitions);
 
@@ -381,9 +382,9 @@ TEST_CASE("Binary - Empty containers in large structure", "[stress][binary][edge
 {
   // Mix of empty and non-empty containers
   std::vector<std::vector<int32_t>> original;
-  original.reserve(1000);
+  original.reserve(1'000);
 
-  for (size_t i = 0; i < 1000; ++i)
+  for (size_t i = 0; i < 1'000; ++i)
   {
     if (i % 3 == 0)
     {

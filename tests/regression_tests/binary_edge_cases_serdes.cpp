@@ -314,8 +314,8 @@ TEST_CASE("Nested vectors binary roundtrip", "[edge_cases][nested]")
 TEST_CASE("Map with vector values binary roundtrip", "[edge_cases][nested]")
 {
   const std::map<std::string, std::vector<int32_t>> original = {
-    {"empty", {}},
-    {"single", {42}},
+    {   "empty",        {}},
+    {  "single",      {42}},
     {"multiple", {1, 2, 3}}
   };
   std::map<std::string, std::vector<int32_t>> restored;
@@ -335,10 +335,7 @@ TEST_CASE("Deeply nested structure (5 levels) binary roundtrip", "[edge_cases][n
   using Level2 = std::vector<Level3>;
   using Level1 = std::vector<Level2>;
 
-  const Level1 original = {
-    {{{{{1, 2}}, {{3}}}}},
-    {{{{{42}}}}}
-  };
+  const Level1 original = {{{{{{1, 2}}, {3}}}}, {{{42}}}};
   Level1 restored;
 
   enki::BinWriter writer;
@@ -350,13 +347,7 @@ TEST_CASE("Deeply nested structure (5 levels) binary roundtrip", "[edge_cases][n
 
 TEST_CASE("Vector of optionals binary roundtrip", "[edge_cases][nested]")
 {
-  const std::vector<std::optional<int32_t>> original = {
-    std::nullopt,
-    42,
-    std::nullopt,
-    -1,
-    0
-  };
+  const std::vector<std::optional<int32_t>> original = {std::nullopt, 42, std::nullopt, -1, 0};
   std::vector<std::optional<int32_t>> restored;
 
   enki::BinWriter writer;
@@ -413,10 +404,17 @@ TEST_CASE("Optional of vector binary roundtrip", "[edge_cases][nested]")
 TEST_CASE("Variant with many alternatives binary roundtrip", "[edge_cases][variant]")
 {
   using BigVariant = std::variant<
-    int8_t, int16_t, int32_t, int64_t,
-    uint8_t, uint16_t, uint32_t, uint64_t,
-    float, double, std::string
-  >;
+    int8_t,
+    int16_t,
+    int32_t,
+    int64_t,
+    uint8_t,
+    uint16_t,
+    uint32_t,
+    uint64_t,
+    float,
+    double,
+    std::string>;
 
   SECTION("First alternative")
   {
@@ -442,13 +440,13 @@ TEST_CASE("Variant with many alternatives binary roundtrip", "[edge_cases][varia
 
   SECTION("Middle alternative (uint32_t)")
   {
-    const BigVariant original = uint32_t{1234567890};
+    const BigVariant original = uint32_t{1'234'567'890};
     BigVariant restored;
 
     enki::BinWriter writer;
     REQUIRE_NOTHROW(enki::serialize(original, writer).or_throw());
     REQUIRE_NOTHROW(enki::deserialize(restored, enki::BinReader(writer.data())).or_throw());
-    REQUIRE(std::get<uint32_t>(restored) == 1234567890);
+    REQUIRE(std::get<uint32_t>(restored) == 1'234'567'890);
   }
 }
 
@@ -560,7 +558,9 @@ TEST_CASE("Single char string binary roundtrip", "[edge_cases][single]")
 
 TEST_CASE("Single pair map binary roundtrip", "[edge_cases][single]")
 {
-  const std::map<std::string, int32_t> original = {{"key", 42}};
+  const std::map<std::string, int32_t> original = {
+    {"key", 42}
+  };
   std::map<std::string, int32_t> restored;
 
   enki::BinWriter writer;
