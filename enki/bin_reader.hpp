@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <span>
+#include <variant>
 #include <vector>
 
 #if __cpp_exceptions >= 199711
@@ -13,18 +14,25 @@
 #endif
 
 #include "enki/impl/concepts.hpp"
+#include "enki/impl/policies.hpp"
 #include "enki/impl/success.hpp"
 
 namespace enki
 {
-  template <typename SizeType = uint32_t>
+  template <typename Policy = strict_t, typename SizeType = uint32_t>
   class BinSpanReader
   {
   public:
+    using policy_type = Policy;                           // NOLINT
     using size_type = SizeType;                           // NOLINT
     static constexpr bool serialize_custom_names = false; // NOLINT
 
     BinSpanReader(std::span<const std::byte> data) :
+      mSpan(data)
+    {
+    }
+
+    explicit BinSpanReader(Policy, std::span<const std::byte> data) :
       mSpan(data)
     {
     }
@@ -44,6 +52,42 @@ namespace enki
       std::memcpy(&v, mSpan.data() + mCurrentIndex, sizeof(T));
       mCurrentIndex += sizeof(T);
       return {sizeof(T)};
+    }
+
+    constexpr Success read(std::monostate &)
+    {
+      return {};  // No bytes to read for monostate
+    }
+
+    /// Skip the size hint only - reads and discards the size prefix
+    /// Used for forward compatibility when deserializing a known variant index
+    constexpr Success skipHint()
+    {
+      SizeType size{};
+      return read(size);
+    }
+
+    /// Skip the size hint and value - reads size then skips that many bytes
+    /// Used for forward compatibility when encountering unknown variant types
+    constexpr Success skipHintAndValue()
+    {
+      SizeType size{};
+      Success result = read(size);
+      if (!result)
+      {
+        return result;
+      }
+
+      if (mCurrentIndex + size > mSpan.size())
+      {
+#if __cpp_exceptions >= 199711
+        throw std::out_of_range("BinReader skipHintAndValue out of range");
+#else
+        std::abort();
+#endif
+      }
+      mCurrentIndex += size;
+      return {sizeof(SizeType) + size};
     }
 
     constexpr Success arrayBegin() const
@@ -109,29 +153,64 @@ namespace enki
       return mSpan.size() - mCurrentIndex;
     }
 
+    /// Read variant index from binary format
+    constexpr Success readVariantIndex(SizeType &index)
+    {
+      return read(index);
+    }
+
+    /// Finish reading a variant - no-op for binary format
+    constexpr Success finishVariant()
+    {
+      return {};
+    }
+
   private:
     std::span<const std::byte> mSpan;
     size_t mCurrentIndex{};
   };
 
-  template <typename SizeType = uint32_t>
-  class BinReader : public BinSpanReader<SizeType>
+  template <typename Policy = strict_t, typename SizeType = uint32_t>
+  class BinReader : public BinSpanReader<Policy, SizeType>
   {
   public:
-    using size_type = typename BinSpanReader<SizeType>::size_type; // NOLINT
+    using policy_type = typename BinSpanReader<Policy, SizeType>::policy_type; // NOLINT
+    using size_type = typename BinSpanReader<Policy, SizeType>::size_type;     // NOLINT
 
     BinReader(std::span<const std::byte> data) :
-      BinSpanReader<>({}),
+      BinSpanReader<Policy, SizeType>({}),
       mData(std::begin(data), std::end(data))
     {
-      static_cast<BinSpanReader<> &>(*this) = {mData};
+      static_cast<BinSpanReader<Policy, SizeType> &>(*this) = {mData};
     }
 
-    using BinSpanReader<>::read;
+    explicit BinReader(Policy, std::span<const std::byte> data) :
+      BinSpanReader<Policy, SizeType>({}),
+      mData(std::begin(data), std::end(data))
+    {
+      static_cast<BinSpanReader<Policy, SizeType> &>(*this) = {mData};
+    }
+
+    using BinSpanReader<Policy, SizeType>::read;
+    using BinSpanReader<Policy, SizeType>::skipHint;
+    using BinSpanReader<Policy, SizeType>::skipHintAndValue;
+    using BinSpanReader<Policy, SizeType>::readVariantIndex;
+    using BinSpanReader<Policy, SizeType>::finishVariant;
 
   private:
     std::vector<std::byte> mData;
   };
+
+  // Deduction guides for BinSpanReader
+  BinSpanReader(std::span<const std::byte>) -> BinSpanReader<strict_t, uint32_t>;
+  BinSpanReader(strict_t, std::span<const std::byte>) -> BinSpanReader<strict_t, uint32_t>;
+  BinSpanReader(forward_compatible_t, std::span<const std::byte>)
+    -> BinSpanReader<forward_compatible_t, uint32_t>;
+
+  // Deduction guides for BinReader
+  BinReader(std::span<const std::byte>) -> BinReader<strict_t, uint32_t>;
+  BinReader(strict_t, std::span<const std::byte>) -> BinReader<strict_t, uint32_t>;
+  BinReader(forward_compatible_t, std::span<const std::byte>) -> BinReader<forward_compatible_t, uint32_t>;
 } // namespace enki
 
 #endif // ENKI_BIN_READER_HPP

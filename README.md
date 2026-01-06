@@ -21,7 +21,8 @@ Enki provides a robust, flexible system for serializing both primitive types and
 - ✅ Maps and associative containers (`std::map`, `std::unordered_map`, etc.)
 - ✅ Tuples and tuple-like structures
 - ✅ Optional values (`std::optional`)
-- ✅ Variants (`std::variant`) (not tested yet)
+- ✅ Variants (`std::variant`) with forward compatibility support
+- ✅ Monostate (`std::monostate`) as null/empty type
 - ✅ Custom structures with reflection-like capabilities
 
 ### Serialization Formats
@@ -35,6 +36,8 @@ Enki provides a robust, flexible system for serializing both primitive types and
 - **Range-based Serialization**: Automatic handling of range constructible containers
 - **Template Specialization**: Extensible system for custom types
 - **Error Handling**: Comprehensive error reporting with `or_throw()` and custom error types
+- **Forward Compatibility**: Policy-based variant handling for schema evolution ([guide](docs/forward-compatibility.md))
+- **CTAD Support**: Clean C++17 syntax with policy-first constructors
 
 ### Quick Start Examples
 
@@ -74,6 +77,23 @@ int main() {
     // result == 42
 }
 ```
+
+#### Using Policies
+
+```cpp
+#include "enki/enki.hpp"
+
+int main() {
+    // Default strict policy
+    enki::BinWriter strict_writer;
+
+    // Forward-compatible policy (allows schema evolution for variants)
+    enki::BinWriter compat_writer(enki::forward_compatible);
+    enki::BinReader compat_reader(enki::forward_compatible, data);
+}
+```
+
+See the [Forward Compatibility Guide](docs/forward-compatibility.md) for detailed usage.
 
 ### Custom Structure Serialization Example (Using `EnkiSerial` Tag)
 
@@ -194,9 +214,8 @@ The test suite covers:
   - Enum serialization
   - Tuple-like structures
   - Range constructible containers
-  - Binary serialization (BinWriter/BinReader/BinSpanWriter/BinSpanReader)
-
-JSON serialization (JSONWriter/JSONReader) is not tested yet.
+  - Binary and JSON serialization
+  - Forward compatibility policies
 
 ### Running Examples
 Build and run the example program to see Enki in action:

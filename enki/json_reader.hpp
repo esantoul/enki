@@ -6,8 +6,10 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <variant>
 
 #include "enki/impl/concepts.hpp"
+#include "enki/impl/policies.hpp"
 #include "enki/impl/success.hpp"
 
 // clang-format off
@@ -124,13 +126,20 @@ namespace enki
     }
   } // namespace
 
-  template <typename SizeType = uint32_t>
+  template <typename Policy = strict_t>
   class JSONReader
   {
   public:
+    using policy_type = Policy;                          // NOLINT
+    using size_type = uint32_t;                          // NOLINT
     static constexpr bool serialize_custom_names = true; // NOLINT
 
     JSONReader(std::string_view sv)
+    {
+      mStream << sv;
+    }
+
+    explicit JSONReader(Policy, std::string_view sv)
     {
       mStream << sv;
     }
@@ -175,6 +184,127 @@ namespace enki
     constexpr Success read(std::string &str)
     {
       mStream >> std::quoted(str);
+      return {};
+    }
+
+    constexpr Success read(std::monostate &)
+    {
+      std::string word = readWord(mStream);
+      if (word != "null")
+      {
+        return "Expected null for monostate";
+      }
+      return {};
+    }
+
+    /// Skip the size hint only - JSON has no size hints, so this is a no-op
+    /// Used for forward compatibility when deserializing a known variant index
+    Success skipHint()
+    {
+      return {};
+    }
+
+    /// Skip a JSON value - parses and discards current value
+    /// Used for forward compatibility when encountering unknown variant types
+    Success skipHintAndValue()
+    {
+      // Skip whitespace
+      mStream >> std::ws;
+
+      int ch = mStream.peek();
+      if (ch == std::char_traits<char>::eof())
+      {
+        return "Unexpected end of JSON";
+      }
+
+      char c = static_cast<char>(ch);
+
+      if (c == '{' || c == '[')
+      {
+        // Object or array - need to match braces/brackets
+        char openBrace = c;
+        char closeBrace = (c == '{') ? '}' : ']';
+        mStream.get(); // consume opening brace
+
+        int depth = 1;
+        bool inString = false;
+        bool escape = false;
+
+        while (depth > 0 && mStream.peek() != std::char_traits<char>::eof())
+        {
+          char cur = static_cast<char>(mStream.get());
+
+          if (escape)
+          {
+            escape = false;
+            continue;
+          }
+
+          if (cur == '\\' && inString)
+          {
+            escape = true;
+            continue;
+          }
+
+          if (cur == '"')
+          {
+            inString = !inString;
+            continue;
+          }
+
+          if (!inString)
+          {
+            if (cur == openBrace)
+            {
+              depth++;
+            }
+            else if (cur == closeBrace)
+            {
+              depth--;
+            }
+          }
+        }
+      }
+      else if (c == '"')
+      {
+        // String - read until closing quote
+        std::string dummy;
+        mStream >> std::quoted(dummy);
+      }
+      else if (c == 't' || c == 'f')
+      {
+        // Boolean
+        readWord(mStream);
+      }
+      else if (c == 'n')
+      {
+        // null
+        readWord(mStream);
+      }
+      else if (c == '-' || std::isdigit(static_cast<unsigned char>(c)))
+      {
+        // Number - read until non-numeric character
+        while (mStream.peek() != std::char_traits<char>::eof())
+        {
+          int next = mStream.peek();
+          char nc = static_cast<char>(next);
+          if (
+            nc == '-' || nc == '+' || nc == '.' || nc == 'e' || nc == 'E' ||
+            std::isdigit(static_cast<unsigned char>(nc)))
+          {
+            mStream.get();
+          }
+          else
+          {
+            break;
+          }
+        }
+      }
+      else
+      {
+        return "Invalid JSON value";
+      }
+
       return {};
     }
 
@@ -265,9 +395,62 @@ namespace enki
       return {};
     }
 
+    /// Read variant index from {"index": value} format
+    /// Reads the opening brace, key (index), and colon
+    Success readVariantIndex(size_type &index)
+    {
+      char brace{};
+      mStream >> brace;
+      if (brace != '{')
+      {
+        return "Expected '{' at start of variant";
+      }
+
+      // Read the key (index as string) - we need to parse it as a number
+      std::string indexStr;
+      mStream >> std::quoted(indexStr);
+
+      // Parse index from string
+      try
+      {
+        index = static_cast<size_type>(std::stoul(indexStr));
+      }
+      catch (...)
+      {
+        return "Invalid variant index in JSON";
+      }
+
+      // Read the colon
+      char colon{};
+      mStream >> colon;
+      if (colon != ':')
+      {
+        return "Expected ':' after variant index";
+      }
+
+      return {};
+    }
+
+    /// Finish reading a variant - reads the closing brace
+    Success finishVariant()
+    {
+      char brace{};
+      mStream >> brace;
+      if (brace != '}')
+      {
+        return "Expected '}' at end of variant";
+      }
+      return {};
+    }
+
   private:
     std::stringstream mStream;
   };
+
+  // Deduction guides for JSONReader
+  JSONReader(std::string_view) -> JSONReader<strict_t>;
+  JSONReader(strict_t, std::string_view) -> JSONReader<strict_t>;
+  JSONReader(forward_compatible_t, std::string_view) -> JSONReader<forward_compatible_t>;
 } // namespace enki
 
 #endif // ENKI_JSON_READER_HPP

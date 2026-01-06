@@ -8,17 +8,24 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <variant>
 
 #include "enki/impl/concepts.hpp"
+#include "enki/impl/policies.hpp"
 #include "enki/impl/success.hpp"
 
 namespace enki
 {
-  template <typename SizeType = uint32_t>
+  template <typename Policy = strict_t>
   class JSONWriter
   {
   public:
+    using policy_type = Policy;                          // NOLINT
+    using size_type = uint32_t;                          // NOLINT
     static constexpr bool serialize_custom_names = true; // NOLINT
+
+    JSONWriter() = default;
+    explicit constexpr JSONWriter(Policy) {}
 
     constexpr Success write(const bool v)
     {
@@ -50,6 +57,12 @@ namespace enki
     constexpr Success write(const std::string &s)
     {
       mStream << std::quoted(s);
+      return {};
+    }
+
+    constexpr Success write(const std::monostate &)
+    {
+      mStream << "null";
       return {};
     }
 
@@ -113,14 +126,46 @@ namespace enki
       return {};
     }
 
+    /// Write a variant as {"index": value}
+    template <typename IndexFunc, typename ValueFunc>
+    constexpr Success writeVariant(IndexFunc &&writeIndex, ValueFunc &&writeValue)
+    {
+      mStream << "{\"";
+      Success indexResult = writeIndex(*this);
+      if (!indexResult)
+      {
+        return indexResult;
+      }
+      mStream << "\": ";
+      Success valueResult = writeValue(*this);
+      if (!valueResult)
+      {
+        return valueResult;
+      }
+      mStream << "}";
+      return {indexResult.size() + valueResult.size()};
+    }
+
     const std::stringstream &data() const
     {
       return mStream;
     }
 
+    /// Write skippable content - JSON is self-describing, just passes through
+    template <typename WriteFunc>
+    constexpr Success writeSkippable(WriteFunc &&writeContent)
+    {
+      return writeContent(*this);
+    }
+
   private:
     std::stringstream mStream;
   };
+
+  // Deduction guides for JSONWriter
+  JSONWriter() -> JSONWriter<strict_t>;
+  JSONWriter(strict_t) -> JSONWriter<strict_t>;
+  JSONWriter(forward_compatible_t) -> JSONWriter<forward_compatible_t>;
 } // namespace enki
 
 #endif // ENKI_JSON_WRITER_HPP

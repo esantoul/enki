@@ -36,6 +36,7 @@ set_target_properties(enki_tests PROPERTIES
 
 target_sources(enki_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/bin_writer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/ctad.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/arithmetic_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/enum_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/array_serdes.cpp
@@ -47,6 +48,7 @@ target_sources(enki_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/custom_type_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/composite_serdes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/conversion_serdes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/regression_tests/policy_forward_compat_serdes.cpp
 )
 
 target_include_directories(enki_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
