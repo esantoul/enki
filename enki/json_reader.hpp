@@ -132,7 +132,7 @@ namespace enki
     }
   } // namespace
 
-  template <typename Policy = strict_t>
+  template <policy Policy = strict_t>
   class JSONReader
   {
   public:

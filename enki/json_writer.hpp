@@ -17,7 +17,7 @@
 
 namespace enki
 {
-  template <typename Policy = strict_t>
+  template <policy Policy = strict_t>
   class JSONWriter
   {
   public:
@@ -26,7 +26,10 @@ namespace enki
     static constexpr bool serialize_custom_names = true; // NOLINT
 
     JSONWriter() = default;
-    explicit constexpr JSONWriter(Policy) {}
+
+    explicit constexpr JSONWriter(Policy)
+    {
+    }
 
     constexpr Success write(const bool v)
     {

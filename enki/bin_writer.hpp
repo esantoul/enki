@@ -29,6 +29,7 @@ namespace enki
     {
     public:
       using enki_writer_base_type = BinWriterBase; // NOLINT
+
       template <concepts::arithmetic_or_enum T>
       constexpr Success write(const T &v)
       {
@@ -184,7 +185,7 @@ namespace enki
   } // namespace detail
 
   template <
-    typename Policy = strict_t,
+    policy Policy = strict_t,
     typename SizeType = uint32_t,
     typename Probe = BinProbe<Policy, SizeType>,
     typename Child = void>
@@ -238,7 +239,7 @@ namespace enki
   };
 
   template <
-    typename Policy = strict_t,
+    policy Policy = strict_t,
     typename SizeType = uint32_t,
     typename Probe = enki::BinProbe<Policy, SizeType>,
     typename Child = void>
