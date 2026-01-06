@@ -144,9 +144,7 @@ TEST_CASE("Deeply nested structure (5 levels) JSON roundtrip", "[edge_cases][nes
   using Level2 = std::vector<Level3>;
   using Level1 = std::vector<Level2>;
 
-  const Level1 original = {
-    {{{{{static_cast<int32_t>(1), static_cast<int32_t>(2)}}, {static_cast<int32_t>(3)}}}},
-    {{{static_cast<int32_t>(42)}}}};
+  const Level1 original = {{{{{{1, 2}}, {3}}}}, {{{42}}}};
   Level1 restored;
 
   enki::JSONWriter writer;

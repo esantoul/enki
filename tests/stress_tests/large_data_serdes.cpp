@@ -175,7 +175,7 @@ TEST_CASE("Binary - Moderately nested vector (10 levels)", "[stress][binary][nes
   using Level10 = std::vector<Level9>;
 
   // Create a structure with one element at each level
-  Level10 original = {{{{{{{{{{static_cast<int32_t>(42)}}}}}}}}}};
+  Level10 original = {{{{{{{{{{42}}}}}}}}}};
 
   enki::BinWriter writer;
   REQUIRE(enki::serialize(original, writer));
