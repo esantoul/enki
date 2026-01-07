@@ -419,7 +419,10 @@ namespace enki
       // Parse index from string
       try
       {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuseless-cast"
         index = static_cast<size_type>(std::stoul(indexStr));
+#pragma GCC diagnostic pop
       }
       catch (...)
       {
